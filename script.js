@@ -1,6 +1,9 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
+  const API_URL =
+    "https://bipod-bondhu-api.entropicmind.workers.dev/api/help-requests";
+
   const menuToggle = document.getElementById("menuToggle");
   const mainNav = document.getElementById("mainNav");
   const helpType = document.getElementById("helpType");
@@ -10,15 +13,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const volunteerForm = document.getElementById("volunteerForm");
   const requestList = document.getElementById("requestList");
 
-  // এই ডেমোতে পোস্ট শুধু বর্তমান পেজ খোলা থাকা পর্যন্ত থাকবে।
-  const requests = [];
-
   document.getElementById("year").textContent =
     new Date().getFullYear();
 
-  // মোবাইল নেভিগেশন মেনু।
+  // Mobile navigation
   menuToggle.addEventListener("click", () => {
     const isOpen = mainNav.classList.toggle("open");
+
     menuToggle.setAttribute("aria-expanded", String(isOpen));
     menuToggle.setAttribute(
       "aria-label",
@@ -36,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // রক্তের গ্রুপের ফিল্ড শুধু রক্তদানের পোস্টে দেখানো হবে।
+  // Show blood fields only for blood requests
   function updateBloodFields() {
     const isBloodRequest =
       helpType.value === "রক্তদাতা প্রয়োজন";
@@ -53,14 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
   helpType.addEventListener("change", updateBloodFields);
   updateBloodFields();
 
-  // ফর্মের অবস্থা দেখানোর জন্য।
   function showMessage(elementId, message, isError = false) {
     const element = document.getElementById(elementId);
+
     element.textContent = message;
     element.classList.toggle("error", isError);
   }
 
-  // ব্যবহারকারীর ইনপুট নিরাপদভাবে টেক্সট হিসেবে দেখানো।
   function makeElement(tag, className, text) {
     const element = document.createElement(tag);
 
@@ -68,25 +68,45 @@ document.addEventListener("DOMContentLoaded", () => {
       element.className = className;
     }
 
-    if (text !== undefined) {
-      element.textContent = text;
+    if (text !== undefined && text !== null) {
+      element.textContent = String(text);
     }
 
     return element;
   }
 
-  // খালি পোস্টের বার্তা সরানো।
   function clearEmptyState() {
-    const emptyState = requestList.querySelector(".empty-state");
+    const emptyState =
+      requestList.querySelector(".empty-state");
 
     if (emptyState) {
       emptyState.remove();
     }
   }
 
-  // নতুন পোস্টের কার্ড তৈরি।
-  function renderRequest(request) {
-    clearEmptyState();
+  function showEmptyState(message) {
+    requestList.replaceChildren(
+      makeElement("p", "empty-state", message)
+    );
+  }
+
+  // Convert database response fields to frontend fields
+  function normalizeRequest(data) {
+    return {
+      id: data.id,
+      type: data.help_type || data.type || data.helpType || "",
+      title: data.title || "",
+      details: data.details || "",
+      area: data.area || "",
+      phone: data.phone || "",
+      bloodGroup: data.blood_group || data.bloodGroup || "",
+      units: data.blood_units ?? data.units ?? ""
+    };
+  }
+
+  // Create a request card safely
+  function renderRequest(rawRequest, addToTop = true) {
+    const request = normalizeRequest(rawRequest);
 
     const card = makeElement("article", "request-card");
     const tag = makeElement("span", "request-tag", request.type);
@@ -95,9 +115,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const meta = makeElement("div", "request-meta");
 
     meta.append(
-      makeElement("p", "", "এলাকা: " + request.area),
-      makeElement("p", "", "যোগাযোগ: " + request.phone)
+      makeElement("p", "", "এলাকা: " + request.area)
     );
+
+    // The API does not publicly return phone numbers.
+    if (request.phone) {
+      meta.append(
+        makeElement("p", "", "যোগাযোগ: " + request.phone)
+      );
+    } else {
+      meta.append(
+        makeElement(
+          "p",
+          "",
+          "যোগাযোগের নম্বর এখানে প্রকাশ করা হয়নি।"
+        )
+      );
+    }
 
     if (request.bloodGroup) {
       meta.append(
@@ -117,12 +151,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const actions = makeElement("div", "request-actions");
 
-    // ফোন কলের লিংক।
-    const callLink = makeElement("a", "btn btn-outline", "ফোন করুন");
-    callLink.href = "tel:" + request.phone.replace(/[^\d+]/g, "");
-    callLink.setAttribute("aria-label", request.title + " বিষয়ে ফোন করুন");
+    // Only show the call button when a phone number is available.
+    if (request.phone) {
+      const callLink = makeElement(
+        "a",
+        "btn btn-outline",
+        "ফোন করুন"
+      );
 
-    // WhatsApp শেয়ার লিংক।
+      callLink.href =
+        "tel:" + request.phone.replace(/[^\d+]/g, "");
+
+      callLink.setAttribute(
+        "aria-label",
+        request.title + " বিষয়ে ফোন করুন"
+      );
+
+      actions.append(callLink);
+    }
+
     const shareLink = makeElement(
       "a",
       "btn btn-primary",
@@ -139,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? "রক্তের গ্রুপ: " + request.bloodGroup
         : "",
       request.units ? "পরিমাণ: " + request.units : "",
-      "যোগাযোগ: " + request.phone,
+      request.phone ? "যোগাযোগ: " + request.phone : "",
       "",
       "অনুগ্রহ করে তথ্য যাচাই করে যোগাযোগ করুন।"
     ].filter(Boolean).join("\n");
@@ -150,13 +197,61 @@ document.addEventListener("DOMContentLoaded", () => {
     shareLink.target = "_blank";
     shareLink.rel = "noopener noreferrer";
 
-    actions.append(callLink, shareLink);
+    actions.append(shareLink);
     card.append(tag, title, details, meta, actions);
-    requestList.prepend(card);
+
+    if (addToTop) {
+      requestList.prepend(card);
+    } else {
+      requestList.append(card);
+    }
   }
 
-  // সাহায্যের পোস্ট তৈরি।
-  helpForm.addEventListener("submit", (event) => {
+  // Load saved requests from D1 through the API
+  async function loadRequests() {
+    showEmptyState("সাহায্যের পোস্ট লোড হচ্ছে...");
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        cache: "no-store"
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error("পোস্ট লোড করা যায়নি।");
+      }
+
+      requestList.replaceChildren();
+
+      if (
+        !Array.isArray(result.requests) ||
+        result.requests.length === 0
+      ) {
+        showEmptyState(
+          "এখনো কোনো সাহায্যের পোস্ট নেই। প্রয়োজন হলে প্রথম পোস্টটি তৈরি করুন।"
+        );
+        return;
+      }
+
+      result.requests.forEach((request) => {
+        renderRequest(request, false);
+      });
+    } catch (error) {
+      console.error("Load requests error:", error);
+
+      showEmptyState(
+        "পোস্ট লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার পেজটি রিফ্রেশ করুন।"
+      );
+    }
+  }
+
+  // Submit a help request to the API and save it in D1
+  helpForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     if (!helpForm.reportValidity()) {
@@ -166,17 +261,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData(helpForm);
 
     const request = {
-      type: String(formData.get("helpType") || ""),
+      type: String(formData.get("helpType") || "").trim(),
       title: String(formData.get("helpTitle") || "").trim(),
       details: String(formData.get("helpDetails") || "").trim(),
       area: String(formData.get("helpArea") || "").trim(),
       phone: String(formData.get("helpContact") || "").trim(),
-      bloodGroup: String(formData.get("bloodGroup") || ""),
-      units: String(formData.get("units") || "")
+      bloodGroup: String(formData.get("bloodGroup") || "").trim(),
+      units: String(formData.get("units") || "").trim()
     };
 
-    if (!request.title || !request.details ||
-        !request.area || !request.phone) {
+    if (
+      !request.title ||
+      !request.details ||
+      !request.area ||
+      !request.phone
+    ) {
       showMessage(
         "helpMessage",
         "সব প্রয়োজনীয় তথ্য পূরণ করুন।",
@@ -185,25 +284,94 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    requests.unshift(request);
-    renderRequest(request);
-
-    showMessage(
-      "helpMessage",
-      "ডেমো পোস্ট তৈরি হয়েছে। এটি শুধু এই পেজে দেখা যাবে; সার্ভারে সংরক্ষিত হয়নি।"
+    const submitButton = helpForm.querySelector(
+      'button[type="submit"], input[type="submit"]'
     );
 
-    helpForm.reset();
-    updateBloodFields();
+    const originalButtonText = submitButton
+      ? (submitButton.tagName === "INPUT"
+          ? submitButton.value
+          : submitButton.textContent)
+      : "";
 
-    document.getElementById("requests").scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    if (submitButton) {
+      submitButton.disabled = true;
+
+      if (submitButton.tagName === "INPUT") {
+        submitButton.value = "পোস্ট সংরক্ষণ হচ্ছে...";
+      } else {
+        submitButton.textContent = "পোস্ট সংরক্ষণ হচ্ছে...";
+      }
+    }
+
+    showMessage("helpMessage", "পোস্ট সংরক্ষণ হচ্ছে...");
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          type: request.type,
+          title: request.title,
+          details: request.details,
+          area: request.area,
+          phone: request.phone,
+          bloodGroup: request.bloodGroup,
+          units: request.units
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "পোস্ট সংরক্ষণ করা যায়নি।"
+        );
+      }
+
+      helpForm.reset();
+      updateBloodFields();
+
+      showMessage(
+        "helpMessage",
+        "সাহায্যের পোস্ট সফলভাবে সংরক্ষিত হয়েছে।"
+      );
+
+      // Reload the saved list from the database.
+      await loadRequests();
+
+      document.getElementById("requests").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    } catch (error) {
+      console.error("Submit request error:", error);
+
+      showMessage(
+        "helpMessage",
+        error.message === "Failed to fetch"
+          ? "সার্ভারের সঙ্গে সংযোগ করা যায়নি। API URL ও CORS সেটিং পরীক্ষা করুন।"
+          : (error.message || "পোস্ট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।"),
+        true
+      );
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+
+        if (submitButton.tagName === "INPUT") {
+          submitButton.value = originalButtonText;
+        } else {
+          submitButton.textContent = originalButtonText;
+        }
+      }
+    }
   });
 
-  // নিবন্ধন ফর্ম এখন শুধু ডেমো।
-  // কোনো নাম, ফোন নম্বর বা অন্য তথ্য সংরক্ষণ করা হয় না।
+  // Donor and volunteer forms remain demo-only.
+  // They do not save personal information.
   function setupDemoRegistration(form, messageId, label) {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -214,7 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       showMessage(
         messageId,
-        label + " ফর্মটি সঠিকভাবে পূরণ হয়েছে। এটি ডেমো সংস্করণ—আপনার তথ্য সংরক্ষিত বা নিবন্ধিত হয়নি।"
+        label +
+          " ফর্মটি সঠিকভাবে পূরণ হয়েছে। এটি ডেমো সংস্করণ—আপনার তথ্য সংরক্ষিত বা নিবন্ধিত হয়নি।"
       );
 
       form.reset();
@@ -232,4 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "volunteerMessage",
     "ভলান্টিয়ার নিবন্ধন"
   );
+
+  // Load database records when the page opens.
+  loadRequests();
 });
