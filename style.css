@@ -904,3 +904,7 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
   }
   }
+/* Hide conditional fields when they are not relevant */
+[hidden] {
+  display: none !important;
+}
