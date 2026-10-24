@@ -3,336 +3,1498 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#16834a">
-  <meta name="description" content="BIPOD BONDHU — জরুরি প্রয়োজনে মানুষের পাশে দাঁড়ানোর একটি মানবিক উদ্যোগ। রক্তদাতা খুঁজুন, সাহায্য চান, স্বেচ্ছাসেবক হোন।">
-  <title>BIPOD BONDHU — মানুষের পাশে মানুষ</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#138a52">
+
+  <meta
+    name="description"
+    content="বিপদ বন্ধু — জরুরি সাহায্য, রক্তদাতা এবং স্বেচ্ছাসেবকদের সঙ্গে মানুষকে যুক্ত করার একটি মানবিক উদ্যোগ।"
+  >
+
+  <meta
+    name="keywords"
+    content="বিপদ বন্ধু, রক্তদাতা, জরুরি সাহায্য, স্বেচ্ছাসেবক, বাংলাদেশ"
+  >
+
+  <title>বিপদ বন্ধু — মানুষের পাশে মানুষ</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-  <a class="skip-link" href="#main">মূল কনটেন্টে যান</a>
 
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --primary: #138a52;
+      --primary-dark: #096b3d;
+      --primary-light: #e8f7ee;
+      --background: #f5faf7;
+      --surface: #ffffff;
+      --text: #183528;
+      --muted: #64766c;
+      --border: #dce9e0;
+      --danger: #c62828;
+      --shadow: 0 8px 28px rgba(18, 90, 53, 0.07);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 85px;
+    }
+
+    body {
+      font-family: "Hind Siliguri", sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin-inline: auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+
+    .navbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      white-space: nowrap;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      background: var(--primary-light);
+      border-radius: 14px;
+      font-size: 24px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 600;
+      color: #425b4c;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .nav-cta {
+      padding: 9px 15px;
+      border-radius: 10px;
+      color: white !important;
+      background: var(--primary);
+    }
+
+    .menu-toggle {
+      display: none;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      color: var(--primary-dark);
+      font-size: 22px;
+    }
+
+    .hero {
+      padding: 72px 0 58px;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(45, 180, 105, 0.12), transparent 30%),
+        linear-gradient(135deg, #f3fbf5, #ffffff 65%);
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.2;
+      letter-spacing: -0.8px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span {
+      color: var(--primary);
+    }
+
+    .hero p {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 17px;
+      margin-bottom: 26px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 19px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-outline {
+      border-color: var(--border);
+      background: white;
+      color: var(--primary-dark);
+    }
+
+    .hero-visual {
+      min-height: 320px;
+      padding: 26px;
+      border: 1px solid #d8eee0;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .visual-heading {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .visual-heading .heart {
+      font-size: 55px;
+      line-height: 1.4;
+    }
+
+    .visual-heading h2 {
+      font-size: 24px;
+    }
+
+    .visual-heading p {
+      font-size: 14px;
+      margin: 5px auto 0;
+    }
+
+    .visual-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+    }
+
+    .visual-item .visual-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--primary-light);
+      font-size: 21px;
+      flex-shrink: 0;
+    }
+
+    .visual-item strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .visual-item small {
+      display: block;
+      color: var(--muted);
+    }
+
+    .section {
+      padding: 66px 0;
+    }
+
+    .section-white {
+      background: white;
+    }
+
+    .section-heading {
+      max-width: 700px;
+      margin: 0 auto 34px;
+      text-align: center;
+    }
+
+    .section-heading .eyebrow {
+      margin-bottom: 10px;
+    }
+
+    .section-heading h2 {
+      font-size: clamp(27px, 4vw, 38px);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .section-heading p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .help-card {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .help-card-icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      background: var(--primary-light);
+      border-radius: 16px;
+      font-size: 26px;
+      margin-bottom: 16px;
+    }
+
+    .help-card h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .help-card p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .text-link {
+      display: inline-block;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 30px;
+      align-items: start;
+    }
+
+    .section-intro {
+      padding-top: 12px;
+    }
+
+    .section-intro h2 {
+      font-size: clamp(27px, 4vw, 38px);
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+
+    .section-intro p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .intro-list {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .intro-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .check {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .panel {
+      padding: 27px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel h3 {
+      font-size: 23px;
+      margin-bottom: 5px;
+    }
+
+    .panel-description {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .form {
+      display: grid;
+      gap: 17px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-width: 0;
+      padding: 12px 13px;
+      border: 1px solid #d3e1d8;
+      border-radius: 11px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(19, 138, 82, 0.1);
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .consent-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .consent-row input {
+      margin-top: 6px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .form .btn {
+      width: 100%;
+      border: none;
+    }
+
+    .form-message {
+      min-height: 22px;
+      font-size: 14px;
+      color: var(--primary-dark);
+      overflow-wrap: anywhere;
+    }
+
+    .form-message.error {
+      color: var(--danger);
+    }
+
+    .privacy-note {
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: #f0f8f2;
+      color: #3c624c;
+      font-size: 13px;
+    }
+
+    .posts-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .posts-toolbar p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .posts-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .request-card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      box-shadow: var(--shadow);
+      overflow-wrap: anywhere;
+    }
+
+    .request-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .request-card h3 {
+      font-size: 19px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .request-type {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .request-card p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 12px;
+      white-space: pre-line;
+    }
+
+    .request-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      color: #52675b;
+      font-size: 13px;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 35px 20px;
+      border: 1px dashed #cbded1;
+      border-radius: var(--radius);
+      text-align: center;
+      color: var(--muted);
+      background: white;
+    }
+
+    .directory-placeholder {
+      padding: 28px;
+      text-align: center;
+      border: 1px dashed #cbded1;
+      border-radius: var(--radius);
+      background: white;
+    }
+
+    .directory-placeholder h3 {
+      font-size: 21px;
+      margin-bottom: 8px;
+    }
+
+    .directory-placeholder p {
+      color: var(--muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    .safety-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .safety-card {
+      padding: 22px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .safety-card h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .safety-card p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .cta-section {
+      padding: 44px 0;
+      background: var(--primary-dark);
+      color: white;
+    }
+
+    .cta-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .cta-inner h2 {
+      font-size: clamp(24px, 4vw, 34px);
+      margin-bottom: 7px;
+    }
+
+    .cta-inner p {
+      color: #d6f0df;
+    }
+
+    .cta-inner .btn {
+      flex-shrink: 0;
+      background: white;
+      color: var(--primary-dark);
+    }
+
+    .site-footer {
+      padding: 28px 0;
+      background: #102a1d;
+      color: #d8e7dd;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .footer-note {
+      color: #b6cbbd;
+      font-size: 13px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .nav-links {
+        gap: 13px;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+      }
+
+      .hero-grid {
+        gap: 25px;
+      }
+
+      .two-column {
+        grid-template-columns: 1fr;
+      }
+
+      .section-intro {
+        max-width: 700px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .navbar {
+        min-height: 66px;
+      }
+
+      .menu-toggle {
+        display: grid;
+        place-items: center;
+      }
+
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 66px;
+        left: 0;
+        right: 0;
+        padding: 18px 20px 22px;
+        background: white;
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+      }
+
+      .nav-links.open {
+        display: flex;
+      }
+
+      .nav-links a {
+        padding: 11px 5px;
+        font-size: 15px;
+      }
+
+      .nav-cta {
+        text-align: center;
+        margin-top: 8px;
+      }
+
+      .hero {
+        padding: 48px 0 40px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual {
+        min-height: auto;
+      }
+
+      .help-grid,
+      .safety-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .posts-list {
+        grid-template-columns: 1fr;
+      }
+
+      .section {
+        padding: 48px 0;
+      }
+
+      .cta-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .brand {
+        font-size: 19px;
+      }
+
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+      }
+
+      .hero h1 {
+        font-size: 35px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+      }
+
+      .panel {
+        padding: 19px;
+      }
+
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .help-card {
+        padding: 20px;
+      }
+
+      .footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
   <header class="site-header">
-    <div class="container nav-wrap">
-      <a class="brand" href="#home" aria-label="বিপদ বন্ধু হোম">
-        <span class="brand-icon" aria-hidden="true">♥</span>
-        <span>
-          <strong>BIPOD BONDHU</strong>
-          <small>মানুষের পাশে মানুষ</small>
-        </span>
+    <div class="container navbar">
+      <a href="#home" class="brand" aria-label="বিপদ বন্ধু হোম">
+        <span class="brand-icon" aria-hidden="true">🤝</span>
+        <span>বিপদ বন্ধু</span>
       </a>
 
-      <button class="menu-toggle" id="menuToggle"
-        aria-expanded="false" aria-controls="mainNav"
-        aria-label="মেনু খুলুন">☰</button>
+      <button
+        class="menu-toggle"
+        id="menuToggle"
+        type="button"
+        aria-label="মেনু খুলুন"
+        aria-expanded="false"
+        aria-controls="navLinks"
+      >☰</button>
 
-      <nav class="nav-links" id="mainNav" aria-label="প্রধান নেভিগেশন">
+      <nav class="nav-links" id="navLinks" aria-label="প্রধান নেভিগেশন">
         <a href="#home">হোম</a>
         <a href="#help">সাহায্য চাই</a>
         <a href="#requests">সাহায্যের পোস্ট</a>
         <a href="#donor">রক্তদাতা</a>
-        <a href="#volunteer">ভলান্টিয়ার</a>
+        <a href="#volunteer">স্বেচ্ছাসেবক</a>
+        <a href="#directory">জরুরি তথ্য</a>
+        <a href="#help" class="nav-cta">সাহায্য করুন</a>
       </nav>
     </div>
   </header>
 
-  <main id="main">
-    <section class="hero section" id="home">
+  <main>
+    <section class="hero" id="home">
       <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="eyebrow"><span class="live-dot"></span> একটি মানবিক উদ্যোগ</span>
-          <h1>বিপদে আপনার পাশে,<br><span>মানুষই মানুষের বন্ধু।</span></h1>
-          <p class="hero-text">
-            জরুরি প্রয়োজনে সাহায্য চান, রক্তদাতা খুঁজুন অথবা
-            স্বেচ্ছাসেবক হয়ে কারও পাশে দাঁড়ান। ছোট একটি উদ্যোগও
-            কারও জীবনে বড় পরিবর্তন আনতে পারে।
+        <div>
+          <span class="eyebrow">● মানুষের পাশে মানুষ</span>
+
+          <h1>
+            বিপদে একা নন,<br>
+            আপনার পাশে <span>বিপদ বন্ধু</span>
+          </h1>
+
+          <p>
+            জরুরি সাহায্য, রক্তদাতা ও স্বেচ্ছাসেবকদের একসঙ্গে যুক্ত করার
+            একটি মানবিক উদ্যোগ। আপনার ছোট একটি সহযোগিতাও কারও জীবনে
+            বড় পরিবর্তন আনতে পারে।
           </p>
+
           <div class="hero-actions">
             <a class="btn btn-primary" href="#help">সাহায্য চাই</a>
             <a class="btn btn-outline" href="#volunteer">স্বেচ্ছাসেবক হোন</a>
           </div>
-          <p class="privacy-note">সহায়তার পোস্ট করতে অ্যাকাউন্ট লাগবে না।</p>
         </div>
 
-        <div class="hero-card" aria-label="মানবিক সহায়তার বার্তা">
-          <div class="hero-heart" aria-hidden="true">♥</div>
-          <h2>একসাথে, আরও শক্তিশালী</h2>
-          <p>আপনার সামান্য সময়, রক্তদান কিংবা সহযোগিতা—কারও জন্য হতে পারে অনেক বড় আশার আলো।</p>
-          <div class="hero-card-bottom">
-            <span>সহমর্মিতা</span>
-            <span>•</span>
-            <span>সহযোগিতা</span>
-            <span>•</span>
-            <span>মানবতা</span>
+        <div class="hero-visual">
+          <div class="visual-heading">
+            <div class="heart" aria-hidden="true">💚</div>
+            <h2>মানবতার বন্ধনে</h2>
+            <p>একটি উদ্যোগ, অসংখ্য সম্ভাবনা</p>
+          </div>
+
+          <div class="visual-item">
+            <div class="visual-icon" aria-hidden="true">🩸</div>
+            <div>
+              <strong>রক্তদাতার সন্ধান</strong>
+              <small>প্রয়োজনের সময় রক্তদাতা খুঁজতে সহায়তা</small>
+            </div>
+          </div>
+
+          <div class="visual-item">
+            <div class="visual-icon" aria-hidden="true">🆘</div>
+            <div>
+              <strong>জরুরি সাহায্য</strong>
+              <small>মানবিক সহায়তার আবেদন প্রকাশ</small>
+            </div>
+          </div>
+
+          <div class="visual-item">
+            <div class="visual-icon" aria-hidden="true">🙌</div>
+            <div>
+              <strong>স্বেচ্ছাসেবী নেটওয়ার্ক</strong>
+              <small>সহযোগিতায় এগিয়ে আসুন</small>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section section-soft" aria-labelledby="servicesTitle">
+    <section class="section section-white" id="help">
       <div class="container">
         <div class="section-heading">
-          <span class="eyebrow">আমাদের উদ্যোগ</span>
-          <h2 id="servicesTitle">কীভাবে পাশে দাঁড়াবেন?</h2>
-          <p>আপনার প্রয়োজন বা সামর্থ্য অনুযায়ী একটি পথ বেছে নিন।</p>
-        </div>
-
-        <div class="service-grid">
-          <article class="service-card">
-            <div class="service-icon blood-icon" aria-hidden="true">+</div>
-            <h3>রক্তদাতা প্রয়োজন</h3>
-            <p>রক্তের প্রয়োজন হলে পোস্ট করুন অথবা স্বেচ্ছায় রক্তদাতা হিসেবে নিবন্ধন করুন।</p>
-            <a href="#help" class="text-link">রক্তের সাহায্য চান →</a>
-          </article>
-
-          <article class="service-card">
-            <div class="service-icon emergency-icon" aria-hidden="true">!</div>
-            <h3>জরুরি সাহায্য</h3>
-            <p>জরুরি পরিস্থিতিতে প্রয়োজনীয় তথ্য দিয়ে সাহায্যের অনুরোধ প্রকাশ করুন।</p>
-            <a href="#help" class="text-link">সাহায্য চাই →</a>
-          </article>
-
-          <article class="service-card">
-            <div class="service-icon volunteer-icon" aria-hidden="true">♥</div>
-            <h3>মানবিক সহযোগিতা</h3>
-            <p>আপনার এলাকার মানুষের পাশে দাঁড়াতে ভলান্টিয়ার হিসেবে যুক্ত হোন।</p>
-            <a href="#volunteer" class="text-link">ভলান্টিয়ার হোন →</a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="help">
-      <div class="container form-layout">
-        <div class="form-intro">
-          <span class="eyebrow">সাহায্যের অনুরোধ</span>
-          <h2>আপনার কী ধরনের সাহায্য প্রয়োজন?</h2>
-          <p>ফর্মটি পূরণ করুন। আপনার দেওয়া তথ্য দিয়ে একটি পোস্ট তৈরি হবে, যা এই ডেমো পেজে দেখা যাবে।</p>
-          <ul class="check-list">
-            <li>অ্যাকাউন্ট ছাড়াই পোস্টের ফর্ম</li>
-            <li>পোস্ট WhatsApp-এ শেয়ার করার সুবিধা</li>
-            <li>প্রয়োজনীয় যোগাযোগের তথ্য</li>
-          </ul>
-          <p class="notice">
-            গোপনীয়তার জন্য রোগীর পূর্ণ মেডিকেল রিপোর্ট, জাতীয় পরিচয়পত্র বা অন্য সংবেদনশীল তথ্য পোস্ট করবেন না।
+          <span class="eyebrow">সাহায্যের হাত বাড়ান</span>
+          <h2>কীভাবে আমরা সাহায্য করতে পারি?</h2>
+          <p>
+            আপনার প্রয়োজন অনুযায়ী সাহায্যের আবেদন তৈরি করুন অথবা
+            অন্যের পাশে দাঁড়াতে স্বেচ্ছাসেবক হিসেবে যুক্ত হন।
           </p>
         </div>
 
-        <form class="panel form" id="helpForm">
-          <h3>সাহায্যের পোস্ট তৈরি করুন</h3>
+        <div class="help-grid">
+          <article class="help-card">
+            <div class="help-card-icon" aria-hidden="true">🩸</div>
+            <h3>রক্তদাতা প্রয়োজন</h3>
+            <p>
+              রক্তের গ্রুপ, প্রয়োজনীয় ব্যাগের সংখ্যা ও এলাকার তথ্য দিয়ে
+              রক্তের আবেদন প্রকাশ করুন।
+            </p>
+            <a href="#helpForm" class="text-link">রক্তের আবেদন করুন →</a>
+          </article>
 
-          <label for="helpType">সাহায্যের ধরন <span>*</span></label>
-          <select id="helpType" name="helpType" required>
-            <option value="রক্তদাতা প্রয়োজন">রক্তদাতা প্রয়োজন</option>
-            <option value="জরুরি সাহায্য">জরুরি সাহায্য</option>
-            <option value="সাধারণ মানবিক সাহায্য">সাধারণ মানবিক সাহায্য</option>
-          </select>
+          <article class="help-card">
+            <div class="help-card-icon" aria-hidden="true">🆘</div>
+            <h3>জরুরি সাহায্য</h3>
+            <p>
+              জরুরি পরিস্থিতি বা মানবিক প্রয়োজনে সাহায্যের আবেদন জানান।
+            </p>
+            <a href="#helpForm" class="text-link">সাহায্য চান →</a>
+          </article>
 
-          <div class="field-row" id="bloodFields">
-            <div class="field">
-              <label for="bloodGroup">রক্তের গ্রুপ</label>
-              <select id="bloodGroup" name="bloodGroup">
-                <option value="">নির্বাচন করুন</option>
-                <option>A+</option><option>A-</option>
-                <option>B+</option><option>B-</option>
-                <option>AB+</option><option>AB-</option>
-                <option>O+</option><option>O-</option>
-                <option>জানা নেই</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="units">রক্তের পরিমাণ</label>
-              <select id="units" name="units">
-                <option value="">নির্বাচন করুন</option>
-                <option>১ ব্যাগ</option><option>২ ব্যাগ</option>
-                <option>৩ ব্যাগ</option><option>অন্যান্য</option>
-              </select>
-            </div>
-          </div>
-
-          <label for="helpTitle">পোস্টের শিরোনাম <span>*</span></label>
-          <input id="helpTitle" name="helpTitle" maxlength="100"
-            placeholder="যেমন: জরুরি A+ রক্তদাতা প্রয়োজন" required>
-
-          <label for="helpDetails">বিস্তারিত <span>*</span></label>
-          <textarea id="helpDetails" name="helpDetails" rows="4"
-            maxlength="1000" placeholder="কী ধরনের সাহায্য প্রয়োজন, কখন প্রয়োজন—সংক্ষেপে লিখুন।" required></textarea>
-
-          <label for="helpArea">এলাকা / হাসপাতাল <span>*</span></label>
-          <input id="helpArea" name="helpArea" maxlength="150"
-            placeholder="যেমন: কুমিল্লা মেডিকেল কলেজ হাসপাতাল" required>
-
-          <label for="helpContact">যোগাযোগের ফোন নম্বর <span>*</span></label>
-          <input id="helpContact" name="helpContact" type="tel"
-            inputmode="tel" maxlength="25" placeholder="যে নম্বরে যোগাযোগ করা যাবে" required>
-
-          <label class="consent-row">
-            <input type="checkbox" id="helpConsent" required>
-            <span>আমি নিশ্চিত করছি যে দেওয়া তথ্য যথাসম্ভব সঠিক এবং যোগাযোগের নম্বরটি শেয়ার করতে সম্মত। <span>*</span></span>
-          </label>
-
-          <button class="btn btn-primary btn-full" type="submit">সাহায্যের পোস্ট তৈরি করুন</button>
-          <p class="form-message" id="helpMessage" role="status" aria-live="polite"></p>
-        </form>
+          <article class="help-card">
+            <div class="help-card-icon" aria-hidden="true">🤲</div>
+            <h3>মানবিক সহযোগিতা</h3>
+            <p>
+              প্রয়োজনীয় সহায়তার কথা জানান, যাতে অন্যরা আপনার আবেদন
+              দেখে সহযোগিতার সুযোগ পান।
+            </p>
+            <a href="#helpForm" class="text-link">আবেদন তৈরি করুন →</a>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section class="section section-soft" id="requests">
-      <div class="container">
-        <div class="section-heading">
-          <span class="eyebrow">সাম্প্রতিক অনুরোধ</span>
-          <h2>সাহায্যের পোস্ট</h2>
-          <p>এই ডেমো সংস্করণে তৈরি করা পোস্টগুলো শুধু বর্তমান পেজে থাকবে।</p>
-        </div>
-        <div id="requestList" class="request-list">
-          <div class="empty-state">
-            <span aria-hidden="true">♡</span>
-            <h3>এখনো কোনো পোস্ট নেই</h3>
-            <p>প্রথম সাহায্যের পোস্টটি আপনিই তৈরি করতে পারেন।</p>
-            <a class="btn btn-outline" href="#help">পোস্ট তৈরি করুন</a>
+    <section class="section" id="help-request">
+      <div class="container two-column">
+        <div class="section-intro">
+          <span class="eyebrow">সাহায্যের আবেদন</span>
+          <h2>আপনার প্রয়োজনের কথা জানান</h2>
+          <p>
+            নিচের ফর্মটি পূরণ করে সাহায্যের পোস্ট তৈরি করুন।
+            পোস্টে প্রয়োজনীয় তথ্য পরিষ্কারভাবে লিখুন, যাতে অন্যরা
+            পরিস্থিতি বুঝে সহযোগিতা করতে পারেন।
+          </p>
+
+          <ul class="intro-list">
+            <li><span class="check">✓</span><span>সঠিক ও প্রয়োজনীয় তথ্য দিন।</span></li>
+            <li><span class="check">✓</span><span>রক্তের আবেদন হলে সঠিক গ্রুপ ও ব্যাগের সংখ্যা নির্বাচন করুন।</span></li>
+            <li><span class="check">✓</span><span>অন্যের ব্যক্তিগত তথ্য অনুমতি ছাড়া প্রকাশ করবেন না।</span></li>
+            <li><span class="check">✓</span><span>জীবন-ঝুঁকির পরিস্থিতিতে সরাসরি জরুরি সেবার সাহায্য নিন।</span></li>
+          </ul>
+
+          <div class="privacy-note" style="margin-top: 22px;">
+            গোপনীয়তা: আবেদনকারীর যোগাযোগের নম্বর পাবলিক পোস্টে দেখানো হবে না।
+            তবে ফর্মে নম্বর দেওয়ার আগে বুঝে নিন যে এটি সিস্টেমে সংরক্ষিত হতে পারে।
           </div>
         </div>
-        <p class="notice notice-wide">
-          পোস্টগুলো এখনো সার্ভারে সংরক্ষিত নয়। বাস্তব ব্যবহারকারীদের পোস্ট দেখতে পরবর্তী ধাপে ডেটাবেস যুক্ত করতে হবে।
-        </p>
+
+        <div class="panel">
+          <h3>সাহায্যের পোস্ট তৈরি করুন</h3>
+          <p class="panel-description">
+            প্রয়োজনীয় তথ্য পূরণ করে আবেদন জমা দিন।
+          </p>
+
+          <form class="form" id="helpForm">
+            <div class="field">
+              <label for="helpType">সাহায্যের ধরন *</label>
+              <select id="helpType" name="helpType" required>
+                <option value="রক্তদাতা প্রয়োজন">রক্তদাতা প্রয়োজন</option>
+                <option value="জরুরি সাহায্য">জরুরি সাহায্য</option>
+                <option value="সাধারণ মানবিক সাহায্য">সাধারণ মানবিক সাহায্য</option>
+              </select>
+            </div>
+
+            <div class="field-row" id="bloodFields">
+              <div class="field">
+                <label for="bloodGroup">রক্তের গ্রুপ *</label>
+                <select id="bloodGroup" name="bloodGroup">
+                  <option value="">নির্বাচন করুন</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="units">রক্তের পরিমাণ *</label>
+                <select id="units" name="units">
+                  <option value="">নির্বাচন করুন</option>
+                  <option value="1">১ ব্যাগ</option>
+                  <option value="2">২ ব্যাগ</option>
+                  <option value="3">৩ ব্যাগ</option>
+                  <option value="4">৪ ব্যাগ</option>
+                  <option value="5">৫ ব্যাগ</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="helpTitle">আবেদনের শিরোনাম *</label>
+              <input
+                id="helpTitle"
+                name="helpTitle"
+                type="text"
+                minlength="3"
+                maxlength="100"
+                placeholder="যেমন: জরুরি A+ রক্ত প্রয়োজন"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="helpDetails">বিস্তারিত তথ্য *</label>
+              <textarea
+                id="helpDetails"
+                name="helpDetails"
+                rows="4"
+                maxlength="1000"
+                placeholder="আপনার প্রয়োজন, সময় ও অন্যান্য গুরুত্বপূর্ণ তথ্য লিখুন"
+                required
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label for="helpArea">এলাকা / হাসপাতাল *</label>
+              <input
+                id="helpArea"
+                name="helpArea"
+                type="text"
+                maxlength="150"
+                placeholder="এলাকা, উপজেলা বা হাসপাতালের নাম"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="helpContact">যোগাযোগের ফোন নম্বর *</label>
+              <input
+                id="helpContact"
+                name="helpContact"
+                type="tel"
+                inputmode="tel"
+                maxlength="25"
+                placeholder="আপনার যোগাযোগ নম্বর"
+                required
+              >
+            </div>
+
+            <label class="consent-row">
+              <input type="checkbox" id="helpConsent" required>
+              <span>
+                আমি নিশ্চিত করছি যে দেওয়া তথ্য যথাসম্ভব সঠিক এবং
+                সাহায্যের আবেদন প্রকাশের জন্য আমার সম্মতি রয়েছে।
+              </span>
+            </label>
+
+            <button class="btn btn-primary" type="submit">
+              সাহায্যের পোস্ট তৈরি করুন
+            </button>
+
+            <p class="form-message" id="helpMessage" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-white" id="requests">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">কমিউনিটি পোস্ট</span>
+          <h2>সাহায্যের আবেদনসমূহ</h2>
+          <p>
+            এখানে প্রকাশিত আবেদনগুলো দেখুন। কোনো আবেদন সম্পর্কে
+            সহযোগিতা করার আগে তথ্য যাচাই করে নিন।
+          </p>
+        </div>
+
+        <div class="posts-toolbar">
+          <p id="requestsStatus" aria-live="polite">
+            সাহায্যের আবেদন লোড হচ্ছে...
+          </p>
+          <a href="#helpForm" class="btn btn-primary">নতুন আবেদন করুন</a>
+        </div>
+
+        <div class="posts-list" id="requestsList" aria-live="polite">
+          <div class="empty-state">
+            আবেদনগুলো লোড হচ্ছে। অনুগ্রহ করে অপেক্ষা করুন।
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="section" id="donor">
-      <div class="container form-layout">
-        <div class="form-intro">
-          <span class="eyebrow">রক্তদাতা হোন</span>
-          <h2>আপনার রক্ত হতে পারে কারও আশার আলো</h2>
-          <p>স্বেচ্ছায় রক্তদাতা হিসেবে যুক্ত হতে নিচের ফর্মটি পূরণ করুন। রক্তদানের উপযুক্ততা চিকিৎসক বা সংশ্লিষ্ট স্বাস্থ্যকর্মীর পরামর্শে নিশ্চিত করুন।</p>
-          <div class="mini-stat">
-            <span class="mini-stat-icon" aria-hidden="true">♥</span>
-            <div><strong>স্বেচ্ছায়, নিরাপদে</strong><p>নিজের সম্মতি ও স্বাস্থ্যকে সর্বোচ্চ গুরুত্ব দিন।</p></div>
-          </div>
-        </div>
+      <div class="container two-column">
+        <div class="section-intro">
+          <span class="eyebrow">রক্তদাতা নিবন্ধন</span>
+          <h2>আপনার রক্ত হতে পারে কারও নতুন জীবন</h2>
+          <p>
+            আপনি রক্তদানে আগ্রহী হলে আপনার তথ্য দিয়ে নিবন্ধনের
+            উদ্যোগ নিতে পারেন। প্রয়োজনের সময় রক্তদাতার সঙ্গে
+            যোগাযোগ করতে সঠিক তথ্য গুরুত্বপূর্ণ।
+          </p>
 
-        <form class="panel form" id="donorForm">
-          <h3>রক্তদাতা নিবন্ধন</h3>
-
-          <label for="donorName">আপনার নাম <span>*</span></label>
-          <input id="donorName" name="name" maxlength="80" required>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="donorGroup">রক্তের গ্রুপ <span>*</span></label>
-              <select id="donorGroup" name="bloodGroup" required>
-                <option value="">নির্বাচন করুন</option>
-                <option>A+</option><option>A-</option>
-                <option>B+</option><option>B-</option>
-                <option>AB+</option><option>AB-</option>
-                <option>O+</option><option>O-</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="donorArea">আপনার এলাকা <span>*</span></label>
-              <input id="donorArea" name="area" maxlength="150" required>
-            </div>
-          </div>
-
-          <label for="donorPhone">যোগাযোগের ফোন <span>*</span></label>
-          <input id="donorPhone" name="phone" type="tel" inputmode="tel" maxlength="25" required>
-
-          <label for="donorRadius">কত দূর পর্যন্ত যেতে পারবেন?</label>
-          <select id="donorRadius" name="radius">
-            <option>৫ কিলোমিটার</option>
-            <option>১০ কিলোমিটার</option>
-            <option>২০ কিলোমিটার</option>
-            <option>পরিস্থিতি অনুযায়ী</option>
-          </select>
-
-          <label class="consent-row">
-            <input type="checkbox" required>
-            <span>আমি স্বেচ্ছায় তথ্য দিচ্ছি এবং যোগাযোগের জন্য আমার সম্মতি আছে। <span>*</span></span>
-          </label>
-
-          <button class="btn btn-primary btn-full" type="submit">ডেমো নিবন্ধন করুন</button>
-          <p class="form-message" id="donorMessage" role="status" aria-live="polite"></p>
-        </form>
-      </div>
-    </section>
-
-    <section class="section section-soft" id="volunteer">
-      <div class="container form-layout">
-        <div class="form-intro">
-          <span class="eyebrow">স্বেচ্ছাসেবক দল</span>
-          <h2>আপনার সময় দিন, মানুষের পাশে দাঁড়ান</h2>
-          <p>রক্তদাতা খুঁজে দেওয়া, জরুরি তথ্য পৌঁছে দেওয়া কিংবা স্থানীয়ভাবে সহায়তার কাজে যুক্ত হতে পারেন।</p>
-          <ul class="check-list">
-            <li>নিজের এলাকার মানুষের পাশে দাঁড়ান</li>
-            <li>কোন ধরনের সাহায্য করতে পারবেন তা জানান</li>
-            <li>নোটিফিকেশন ব্যবস্থা পরে যুক্ত করা হবে</li>
+          <ul class="intro-list">
+            <li><span class="check">✓</span><span>শুধু নিজের সঠিক তথ্য দিন।</span></li>
+            <li><span class="check">✓</span><span>আপনার যোগাযোগের তথ্য ব্যক্তিগত রাখুন।</span></li>
+            <li><span class="check">✓</span><span>রক্তদানের আগে নিজের স্বাস্থ্য ও যোগ্যতা যাচাই করুন।</span></li>
           </ul>
         </div>
 
-        <form class="panel form" id="volunteerForm">
-          <h3>ভলান্টিয়ার নিবন্ধন</h3>
+        <div class="panel">
+          <h3>রক্তদাতা ফর্ম</h3>
+          <p class="panel-description">
+            রক্তদাতা নিবন্ধনের জন্য প্রয়োজনীয় তথ্য দিন।
+          </p>
 
-          <label for="volunteerName">আপনার নাম <span>*</span></label>
-          <input id="volunteerName" name="name" maxlength="80" required>
+          <form class="form" id="donorForm">
+            <div class="field">
+              <label for="donorName">আপনার নাম *</label>
+              <input
+                id="donorName"
+                name="name"
+                type="text"
+                maxlength="100"
+                autocomplete="name"
+                placeholder="আপনার নাম"
+                required
+              >
+            </div>
 
-          <label for="volunteerArea">আপনার এলাকা <span>*</span></label>
-          <input id="volunteerArea" name="area" maxlength="150" required>
+            <div class="field">
+              <label for="donorGroup">রক্তের গ্রুপ *</label>
+              <select id="donorGroup" name="bloodGroup" required>
+                <option value="">নির্বাচন করুন</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
 
-          <label for="volunteerPhone">যোগাযোগের ফোন <span>*</span></label>
-          <input id="volunteerPhone" name="phone" type="tel" inputmode="tel" maxlength="25" required>
+            <div class="field">
+              <label for="donorArea">এলাকা *</label>
+              <input
+                id="donorArea"
+                name="area"
+                type="text"
+                maxlength="150"
+                placeholder="আপনার এলাকা / উপজেলা"
+                required
+              >
+            </div>
 
-          <label for="volunteerType">কোন ধরনের সাহায্য করতে চান? <span>*</span></label>
-          <select id="volunteerType" name="type" required>
-            <option value="">নির্বাচন করুন</option>
-            <option>রক্তদাতা খুঁজে দিতে</option>
-            <option>জরুরি সাহায্যে</option>
-            <option>সাধারণ মানবিক সহায়তায়</option>
-            <option>সব ধরনের সহায়তায়</option>
-          </select>
+            <div class="field">
+              <label for="donorPhone">যোগাযোগের নম্বর *</label>
+              <input
+                id="donorPhone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                maxlength="25"
+                placeholder="আপনার ফোন নম্বর"
+                required
+              >
+            </div>
 
-          <label for="volunteerRadius">সাহায্যের পরিসর</label>
-          <select id="volunteerRadius" name="radius">
-            <option>৫ কিলোমিটার</option>
-            <option>১০ কিলোমিটার</option>
-            <option>২০ কিলোমিটার</option>
-            <option>পরিস্থিতি অনুযায়ী</option>
-          </select>
+            <div class="field">
+              <label for="donorRadius">কত দূরত্বে সাহায্য করতে পারবেন?</label>
+              <select id="donorRadius" name="radius" required>
+                <option value="5">৫ কিলোমিটারের মধ্যে</option>
+                <option value="10">১০ কিলোমিটারের মধ্যে</option>
+                <option value="20">২০ কিলোমিটারের মধ্যে</option>
+                <option value="50">৫০ কিলোমিটার বা তার বেশি</option>
+              </select>
+            </div>
 
-          <label class="consent-row">
-            <input type="checkbox" required>
-            <span>আমি স্বেচ্ছায় যুক্ত হচ্ছি এবং আমার তথ্য ব্যবহারে সম্মত। <span>*</span></span>
-          </label>
+            <label class="consent-row">
+              <input type="checkbox" id="donorConsent" required>
+              <span>
+                আমি সম্মতি দিচ্ছি যে আমার তথ্য রক্তদাতা নিবন্ধনের
+                উদ্দেশ্যে ব্যবহার করা যেতে পারে।
+              </span>
+            </label>
 
-          <button class="btn btn-primary btn-full" type="submit">ডেমো নিবন্ধন করুন</button>
-          <p class="form-message" id="volunteerMessage" role="status" aria-live="polite"></p>
-        </form>
+            <button class="btn btn-primary" type="submit">
+              রক্তদাতা হিসেবে নিবন্ধন করুন
+            </button>
+
+            <p class="form-message" id="donorMessage" role="status" aria-live="polite"></p>
+          </form>
+        </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container safety-panel">
-        <div class="safety-icon" aria-hidden="true">!</div>
-        <div>
-          <h2>নিরাপত্তা সবার আগে</h2>
-          <p>সাহায্যের অনুরোধ যাচাই করে নিন। অপরিচিত কাউকে টাকা পাঠানোর আগে সতর্ক থাকুন। রক্তদানের ক্ষেত্রে হাসপাতাল বা অনুমোদিত রক্তসঞ্চালন সেবার সঙ্গে যোগাযোগ করুন। এই ওয়েবসাইট জরুরি সেবার বিকল্প নয়।</p>
+    <section class="section section-white" id="volunteer">
+      <div class="container two-column">
+        <div class="section-intro">
+          <span class="eyebrow">স্বেচ্ছাসেবী হোন</span>
+          <h2>আপনার সময় ও সামর্থ্য দিয়ে পাশে দাঁড়ান</h2>
+          <p>
+            মানুষের প্রয়োজনে সাহায্য করতে আগ্রহী হলে স্বেচ্ছাসেবক
+            হিসেবে নিবন্ধনের উদ্যোগ নিতে পারেন।
+          </p>
+
+          <ul class="intro-list">
+            <li><span class="check">✓</span><span>নিজের সক্ষমতা অনুযায়ী কাজ বেছে নিন।</span></li>
+            <li><span class="check">✓</span><span>সাহায্যপ্রার্থীর ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষা করুন।</span></li>
+            <li><span class="check">✓</span><span>নিজের নিরাপত্তা নিশ্চিত করে সহায়তা করুন।</span></li>
+          </ul>
         </div>
+
+        <div class="panel">
+          <h3>স্বেচ্ছাসেবক ফর্ম</h3>
+          <p class="panel-description">
+            আপনার তথ্য ও সহযোগিতার ধরন জানান।
+          </p>
+
+          <form class="form" id="volunteerForm">
+            <div class="field">
+              <label for="volunteerName">আপনার নাম *</label>
+              <input
+                id="volunteerName"
+                name="name"
+                type="text"
+                maxlength="100"
+                autocomplete="name"
+                placeholder="আপনার নাম"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="volunteerArea">আপনার এলাকা *</label>
+              <input
+                id="volunteerArea"
+                name="area"
+                type="text"
+                maxlength="150"
+                placeholder="এলাকা / উপজেলা"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="volunteerPhone">যোগাযোগের নম্বর *</label>
+              <input
+                id="volunteerPhone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                maxlength="25"
+                placeholder="আপনার ফোন নম্বর"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="volunteerType">কী ধরনের সাহায্য করতে চান? *</label>
+              <select id="volunteerType" name="type" required>
+                <option value="">নির্বাচন করুন</option>
+                <option value="জরুরি সহায়তা">জরুরি সহায়তা</option>
+                <option value="রক্তদাতা খুঁজতে সহায়তা">রক্তদাতা খুঁজতে সহায়তা</option>
+                <option value="ত্রাণ ও মানবিক সহায়তা">ত্রাণ ও মানবিক সহায়তা</option>
+                <option value="তথ্য ও যোগাযোগ সহায়তা">তথ্য ও যোগাযোগ সহায়তা</option>
+                <option value="অন্যান্য">অন্যান্য</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="volunteerRadius">কত দূরত্বে সাহায্য করতে পারবেন?</label>
+              <select id="volunteerRadius" name="radius" required>
+                <option value="5">৫ কিলোমিটারের মধ্যে</option>
+                <option value="10">১০ কিলোমিটারের মধ্যে</option>
+                <option value="20">২০ কিলোমিটারের মধ্যে</option>
+                <option value="50">৫০ কিলোমিটার বা তার বেশি</option>
+              </select>
+            </div>
+
+            <label class="consent-row">
+              <input type="checkbox" id="volunteerConsent" required>
+              <span>
+                আমি স্বেচ্ছাসেবক নিবন্ধনের জন্য আমার দেওয়া তথ্য ব্যবহারে
+                সম্মতি দিচ্ছি।
+              </span>
+            </label>
+
+            <button class="btn btn-primary" type="submit">
+              স্বেচ্ছাসেবক হিসেবে নিবন্ধন করুন
+            </button>
+
+            <p class="form-message" id="volunteerMessage" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="directory">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">জরুরি তথ্য</span>
+          <h2>হাসপাতাল ও জরুরি সেবা</h2>
+          <p>
+            জরুরি পরিস্থিতিতে যাচাইকৃত হাসপাতাল, ব্লাড ব্যাংক ও
+            জরুরি সেবার যোগাযোগের তথ্য গুরুত্বপূর্ণ।
+          </p>
+        </div>
+
+        <div class="directory-placeholder">
+          <h3>যাচাইকৃত ডিরেক্টরি তৈরি হচ্ছে</h3>
+          <p>
+            এই বিভাগে যাচাই করা হাসপাতাল, ব্লাড ব্যাংক ও জরুরি
+            সেবার তথ্য যুক্ত করা হবে। তথ্য যাচাই না হওয়া পর্যন্ত
+            কোনো প্রতিষ্ঠানকে যাচাইকৃত হিসেবে দেখানো হবে না।
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-white" id="safety">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">নিরাপত্তা ও সচেতনতা</span>
+          <h2>সাহায্য করুন, নিরাপদ থাকুন</h2>
+          <p>
+            অনলাইনে পাওয়া প্রতিটি আবেদন যাচাই করে তারপর সিদ্ধান্ত নিন।
+          </p>
+        </div>
+
+        <div class="safety-grid">
+          <article class="safety-card">
+            <h3>তথ্য যাচাই করুন</h3>
+            <p>
+              সাহায্যের প্রয়োজন, পরিচয় ও প্রাসঙ্গিক তথ্য যথাসম্ভব
+              যাচাই না করে টাকা পাঠাবেন না।
+            </p>
+          </article>
+
+          <article class="safety-card">
+            <h3>ব্যক্তিগত তথ্য রক্ষা করুন</h3>
+            <p>
+              পাসওয়ার্ড, OTP, ব্যাংকিং তথ্য বা প্রয়োজনের অতিরিক্ত
+              ব্যক্তিগত তথ্য কাউকে দেবেন না।
+            </p>
+          </article>
+
+          <article class="safety-card">
+            <h3>জরুরি সেবা নিন</h3>
+            <p>
+              জীবন-ঝুঁকি বা চিকিৎসাজনিত জরুরি অবস্থায় ওয়েবসাইটের
+              ওপর নির্ভর না করে সরাসরি জরুরি সেবার সঙ্গে যোগাযোগ করুন।
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div class="container cta-inner">
+        <div>
+          <h2>মানুষের পাশে দাঁড়াতে প্রস্তুত?</h2>
+          <p>আপনার সহযোগিতা কারও জন্য আশার আলো হতে পারে।</p>
+        </div>
+        <a href="#volunteer" class="btn">স্বেচ্ছাসেবক হোন</a>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-content">
-      <a class="brand footer-brand" href="#home">
-        <span class="brand-icon" aria-hidden="true">♥</span>
-        <span><strong>BIPOD BONDHU</strong><small>মানুষের পাশে মানুষ</small></span>
-      </a>
-      <p>মানবিকতা দিয়ে গড়ি সহমর্মিতার বন্ধন।</p>
-      <p class="copyright">© <span id="year"></span> BIPOD BONDHU. সর্বস্বত্ব সংরক্ষিত।</p>
-      <p class="credit">A community-support initiative by EntropicMind</p>
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand">বিপদ বন্ধু</div>
+        <div class="footer-note">মানুষের পাশে মানুষ — মানবিকতার বন্ধনে।</div>
+      </div>
+
+      <nav class="footer-links" aria-label="ফুটার নেভিগেশন">
+        <a href="#home">হোম</a>
+        <a href="#help">সাহায্য চাই</a>
+        <a href="#requests">আবেদনসমূহ</a>
+        <a href="#safety">নিরাপত্তা</a>
+      </nav>
+
+      <p class="footer-note">
+        © <span id="currentYear">2026</span> বিপদ বন্ধু। সর্বস্বত্ব সংরক্ষিত।
+      </p>
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script>
+    // Mobile navigation
+    const menuToggle = document.getElementById("menuToggle");
+    const navLinks = document.getElementById("navLinks");
+
+    if (menuToggle && navLinks) {
+      menuToggle.addEventListener("click", () => {
+        const isOpen = navLinks.classList.toggle("open");
+        menuToggle.setAttribute("aria-expanded", String(isOpen));
+        menuToggle.setAttribute(
+          "aria-label",
+          isOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"
+        );
+        menuToggle.textContent = isOpen ? "×" : "☰";
+      });
+
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          navLinks.classList.remove("open");
+          menuToggle.setAttribute("aria-expanded", "false");
+          menuToggle.setAttribute("aria-label", "মেনু খুলুন");
+          menuToggle.textContent = "☰";
+        });
+      });
+    }
+
+    // Current year
+    const currentYear = document.getElementById("currentYear");
+    if (currentYear) {
+      currentYear.textContent = new Date().getFullYear();
+    }
+
+    // Show blood fields only for blood requests
+    const helpType = document.getElementById("helpType");
+    const bloodFields = document.getElementById("bloodFields");
+    const bloodGroup = document.getElementById("bloodGroup");
+    const units = document.getElementById("units");
+
+    function updateBloodFields() {
+      if (!helpType || !bloodFields || !bloodGroup || !units) return;
+
+      const isBloodRequest =
+        helpType.value === "রক্তদাতা প্রয়োজন";
+
+      bloodFields.hidden = !isBloodRequest;
+      bloodGroup.required = isBloodRequest;
+      units.required = isBloodRequest;
+
+      if (!isBloodRequest) {
+        bloodGroup.value = "";
+        units.value = "";
+      }
+    }
+
+    if (helpType) {
+      helpType.addEventListener("change", updateBloodFields);
+      updateBloodFields();
+    }
+  </script>
+
+  <!-- API-connected form submission and posts loading -->
+  <script src="script.js" defer></script>
 </body>
   </html>
