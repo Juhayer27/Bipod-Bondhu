@@ -1,0 +1,395 @@
+(() => {
+  "use strict";
+
+  /*
+   * BIPOD BONDHU — Frontend prototype
+   * Data is stored only in this browser using localStorage.
+   * This is NOT a shared online database. Do not publish real personal data
+   * until Supabase/backend security, ownership verification and privacy controls
+   * are configured and tested.
+   */
+
+  const STORAGE = {
+    posts: "bb_posts_v1",
+    donors: "bb_donors_v1",
+    volunteers: "bb_volunteers_v1"
+  };
+  const categories = {
+    blood: { label: "রক্তের প্রয়োজন", badge: "blood" },
+    urgent: { label: "জরুরি সহায়তা", badge: "urgent" },
+    general: { label: "সাধারণ মানবিক সহায়তা", badge: "general" }
+  };
+  const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const hotlines = [
+    { name: "জাতীয় জরুরি সেবা", number: "999", description: "পুলিশ, ফায়ার সার্ভিস ও অ্যাম্বুলেন্স-সংক্রান্ত জরুরি সহায়তা" },
+    { name: "সরকারি তথ্য ও সেবা", number: "333", description: "সরকারি সেবা ও তথ্যের জন্য" },
+    { name: "নারী ও শিশু নির্যাতন প্রতিরোধ", number: "109", description: "নারী ও শিশু নির্যাতন প্রতিরোধে সহায়তা" },
+    { name: "শিশু সহায়তা", number: "1098", description: "শিশুদের সহায়তা ও সুরক্ষা" },
+    { name: "দুর্যোগের আগাম বার্তা", number: "1090", description: "দুর্যোগ-সংক্রান্ত তথ্য ও সতর্কবার্তা" },
+    { name: "সরকারি আইনগত সহায়তা", number: "16430", description: "আইনগত সহায়তা সংক্রান্ত তথ্য" },
+    { name: "স্বাস্থ্য বাতায়ন", number: "16263", description: "স্বাস্থ্য পরামর্শ ও স্বাস্থ্যসেবা সংক্রান্ত তথ্য" },
+    { name: "কৃষি কল সেন্টার", number: "16123", description: "কৃষি বিষয়ক পরামর্শ" }
+  ];
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const view = $("#app-view");
+  const toastEl = $("#toast");
+  const dialog = $("#delete-dialog");
+  let toastTimer;
+  let activePostFilter = "all";
+
+  function read(key) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  function write(key, items) {
+    try {
+      localStorage.setItem(key, JSON.stringify(items));
+      return true;
+    } catch {
+      showToast("এই ব্রাউজারে তথ্য সংরক্ষণ করা যায়নি। স্টোরেজ খালি করুন বা অন্য ব্রাউজার ব্যবহার করুন।");
+      return false;
+    }
+  }
+  function uid() {
+    return "bb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
+  }
+  function escapeHTML(value = "") {
+    return String(value).replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[ch]);
+  }
+  function bn(value) {
+    return String(value).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[Number(d)]);
+  }
+  function dateLabel(value) {
+    try {
+      return new Intl.DateTimeFormat("bn-BD", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+    } catch { return ""; }
+  }
+  function normalizePhone(raw) {
+    return String(raw || "").replace(/[^\d+]/g, "");
+  }
+  function validBDPhone(raw) {
+    const p = normalizePhone(raw).replace(/^\+88/, "").replace(/^0088/, "");
+    return /^(01[3-9]\d{8})$/.test(p);
+  }
+  function phoneHref(phone) {
+    return "tel:" + normalizePhone(phone);
+  }
+  function waHref(phone, message = "আসসালামু আলাইকুম, বিপদ বন্ধু ওয়েবসাইটে আপনার তথ্য পেয়েছি।") {
+    let digits = normalizePhone(phone).replace(/\D/g, "");
+    if (digits.startsWith("0088")) digits = digits.slice(2);
+    if (digits.startsWith("0")) digits = "88" + digits;
+    return "https://wa.me/" + digits + "?text=" + encodeURIComponent(message);
+  }
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3600);
+  }
+  function updateStats() {
+    $("#stat-posts").textContent = bn(read(STORAGE.posts).length);
+    $("#stat-donors").textContent = bn(read(STORAGE.donors).length);
+    $("#stat-volunteers").textContent = bn(read(STORAGE.volunteers).length);
+  }
+  function renderPlaceholder() {
+    view.innerHTML = '<div class="view-placeholder"><span class="eyebrow">BIPOD BONDHU</span><h2>মানুষ মানুষের জন্য</h2><p>উপরের যেকোনো সেবা নির্বাচন করে শুরু করুন।</p></div>';
+  }
+  function openView(name) {
+    const renderers = {
+      create: renderCreateForm,
+      posts: renderPosts,
+      donors: renderDonors,
+      "join-donor": renderDonorForm,
+      "join-volunteer": renderVolunteerForm,
+      hotlines: renderHotlines
+    };
+    if (renderers[name]) {
+      renderers[name]();
+      view.focus({ preventScroll: true });
+      view.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      renderPlaceholder();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+  function panelHead(title, subtitle, extra = "") {
+    return `<div class="panel-head"><div><span class="eyebrow">BIPOD BONDHU সেবা</span><h2>${title}</h2><p>${subtitle}</p></div>${extra}</div>`;
+  }
+  function field(label, name, type = "text", options = {}) {
+    const full = options.full ? " full" : "";
+    const required = options.required === false ? "" : ' required';
+    const hint = options.hint ? `<span class="field-hint">${options.hint}</span>` : "";
+    let input = "";
+    if (type === "textarea") {
+      input = `<textarea id="${name}" name="${name}" placeholder="${options.placeholder || ""}"${required} ${options.maxlength ? `maxlength="${options.maxlength}"` : ""}></textarea>`;
+    } else if (type === "select") {
+      input = `<select id="${name}" name="${name}"${required}>${options.options}</select>`;
+    } else {
+      input = `<input id="${name}" name="${name}" type="${type}" placeholder="${options.placeholder || ""}"${required} ${options.maxlength ? `maxlength="${options.maxlength}"` : ""} ${options.pattern ? `pattern="${options.pattern}"` : ""} ${options.min !== undefined ? `min="${options.min}"` : ""} ${options.max !== undefined ? `max="${options.max}"` : ""} ${options.autocomplete ? `autocomplete="${options.autocomplete}"` : ""}>`;
+    }
+    return `<div class="field${full}"><label for="${name}">${label}${options.required === false ? "" : ' <span class="required">*</span>'}</label>${input}${hint}</div>`;
+  }
+  function categoryOptions(selected = "blood") {
+    return Object.entries(categories).map(([key, item]) => `<option value="${key}" ${key === selected ? "selected" : ""}>${item.label}</option>`).join("");
+  }
+  function bloodOptions(placeholder = "রক্তের গ্রুপ বেছে নিন") {
+    return `<option value="">${placeholder}</option>` + bloodGroups.map(g => `<option value="${g}">${g}</option>`).join("");
+  }
+  function renderCreateForm() {
+    view.innerHTML = `<section class="panel">
+      ${panelHead("সাহায্যের পোস্ট তৈরি করুন", "প্রয়োজনীয় তথ্য দিন, যাতে সাহায্য করতে ইচ্ছুক মানুষ আপনার সঙ্গে যোগাযোগ করতে পারেন।")}
+      <div class="warning"><strong>গুরুত্বপূর্ণ:</strong> এই সংস্করণে পোস্ট শুধু এই ব্রাউজারে থাকবে; অন্য কেউ অনলাইনে দেখতে পাবে না। বাস্তব সেবার আগে ব্যাকএন্ড যুক্ত করতে হবে। ফোন নম্বর ও ঠিকানা পোস্টে প্রকাশিত হবে।</div>
+      <form id="post-form">
+        <div class="form-grid">
+          ${field("সাহায্যের ধরন", "post-category", "select", { options: categoryOptions("blood") })}
+          ${field("আপনার নাম", "post-name", "text", { placeholder: "পূর্ণ নাম", maxlength: 80, autocomplete: "name" })}
+          ${field("পোস্টের শিরোনাম", "post-title", "text", { placeholder: "যেমন: জরুরি ভিত্তিতে A+ রক্ত প্রয়োজন", maxlength: 120 })}
+          ${field("মোবাইল নম্বর", "post-phone", "tel", { placeholder: "01XXXXXXXXX", pattern: "^(\\\\+?88)?01[3-9][0-9]{8}$", maxlength: 14, autocomplete: "tel" })}
+          ${field("সহায়তার স্থান / ঠিকানা", "post-address", "text", { placeholder: "এলাকা, থানা, জেলা", maxlength: 180, full: true, autocomplete: "street-address" })}
+          <div class="field full"><label for="post-description">বিস্তারিত বিবরণ <span class="required">*</span></label><textarea id="post-description" name="post-description" required maxlength="1800" placeholder="কী ধরনের সাহায্য প্রয়োজন, কখন প্রয়োজন এবং প্রাসঙ্গিক তথ্য লিখুন।"></textarea><span class="field-hint">ব্যক্তিগত পরিচয়পত্র, ব্যাংক তথ্য বা অপ্রয়োজনীয় সংবেদনশীল তথ্য লিখবেন না।</span></div>
+          <div class="field full" id="blood-extra" hidden>
+            <div class="form-grid">
+              ${field("রক্তের গ্রুপ", "post-blood-group", "select", { options: bloodOptions() })}
+              ${field("কত ব্যাগ রক্ত প্রয়োজন", "post-blood-units", "number", { min: 1, max: 20, placeholder: "যেমন: ২" })}
+            </div>
+          </div>
+        </div>
+        <div class="field full" style="margin-top:16px">
+          <label class="consent-row"><input type="checkbox" id="post-consent" required><span>আমি নিশ্চিত করছি যে দেওয়া তথ্য যথাসম্ভব সঠিক এবং বুঝতে পারছি যে এই পোস্টে আমার নাম, ফোন নম্বর ও ঠিকানা প্রকাশিত হবে।</span></label>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">পোস্ট করুন <span>↗</span></button><button class="btn btn-secondary" type="reset">ফর্ম মুছুন</button></div>
+      </form>
+    </section>`;
+    const category = $("#post-category");
+    const bloodExtra = $("#blood-extra");
+    const bloodGroup = $("#post-blood-group");
+    const units = $("#post-blood-units");
+    function syncBloodFields() {
+      const show = category.value === "blood";
+      bloodExtra.hidden = !show;
+      bloodGroup.required = show;
+      units.required = show;
+    }
+    category.addEventListener("change", syncBloodFields);
+    syncBloodFields();
+    $("#post-form").addEventListener("reset", () => setTimeout(syncBloodFields, 0));
+    $("#post-form").addEventListener("submit", submitPost);
+  }
+  function submitPost(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const phone = data.get("post-phone");
+    if (!validBDPhone(phone)) return showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন (যেমন 01XXXXXXXXX)।");
+    const category = data.get("post-category");
+    const deleteCode = String(Math.floor(100000 + Math.random() * 900000));
+    const post = {
+      id: uid(),
+      category,
+      name: String(data.get("post-name")).trim(),
+      title: String(data.get("post-title")).trim(),
+      phone: normalizePhone(phone),
+      address: String(data.get("post-address")).trim(),
+      description: String(data.get("post-description")).trim(),
+      bloodGroup: category === "blood" ? data.get("post-blood-group") : "",
+      units: category === "blood" ? Number(data.get("post-blood-units")) : null,
+      createdAt: new Date().toISOString(),
+      deleteCode
+    };
+    if (!post.name || !post.title || !post.address || !post.description) return showToast("সব প্রয়োজনীয় ঘর পূরণ করুন।");
+    if (!write(STORAGE.posts, [post, ...read(STORAGE.posts)])) return;
+    updateStats();
+    view.innerHTML = `<section class="panel">${panelHead("পোস্ট তৈরি হয়েছে", "এই ডেমোতে পোস্টটি শুধু এই ব্রাউজারে সংরক্ষিত হয়েছে।")}
+      <div class="info-box"><strong>আপনার গোপন ডিলিট কোড: <span style="font-size:20px">${bn(deleteCode)}</span></strong><br>কোডটি নিরাপদে লিখে রাখুন। এই ব্রাউজারের ডেটা মুছে গেলে পোস্ট ও কোডও হারিয়ে যেতে পারে।</div>
+      <div class="form-actions"><button class="btn btn-primary" data-view="posts">পোস্টের তালিকা দেখুন</button><button class="btn btn-secondary" data-view="create">আরেকটি পোস্ট করুন</button></div></section>`;
+    showToast("পোস্টটি এই ব্রাউজারে সংরক্ষিত হয়েছে।");
+  }
+  function categoryBadge(category) {
+    const item = categories[category] || categories.general;
+    return `<span class="badge ${item.badge}">${item.label}</span>`;
+  }
+  function renderPosts() {
+    const posts = read(STORAGE.posts).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    view.innerHTML = `<section class="panel">
+      ${panelHead("সকল সাহায্যের পোস্ট", "সহায়তার ধরন বেছে নিয়ে পোস্ট খুঁজুন।")}
+      <div class="warning">এই তালিকায় কেবল এই ব্রাউজারে তৈরি করা পোস্ট দেখা যাবে। অন্য ব্যবহারকারীর পোস্ট পেতে অনলাইন ডেটাবেস প্রয়োজন।</div>
+      <div class="tabs" role="tablist" aria-label="পোস্টের ধরন">
+        <button class="tab ${activePostFilter === "all" ? "active" : ""}" data-post-filter="all">সব পোস্ট (${bn(posts.length)})</button>
+        ${Object.entries(categories).map(([key, item]) => `<button class="tab ${activePostFilter === key ? "active" : ""}" data-post-filter="${key}">${item.label} (${bn(posts.filter(p => p.category === key).length)})</button>`).join("")}
+      </div>
+      <div class="toolbar"><input id="post-search" type="search" placeholder="শিরোনাম, এলাকা বা বিবরণ দিয়ে খুঁজুন" aria-label="পোস্ট খুঁজুন"><select id="post-sort" aria-label="পোস্ট সাজান"><option value="new">নতুন পোস্ট আগে</option><option value="old">পুরোনো পোস্ট আগে</option></select></div>
+      <div id="posts-list" class="cards-list"></div>
+    </section>`;
+    const renderList = () => {
+      const term = ($("#post-search").value || "").trim().toLowerCase();
+      const sort = $("#post-sort").value;
+      let filtered = read(STORAGE.posts).filter(p => activePostFilter === "all" || p.category === activePostFilter);
+      filtered = filtered.filter(p => [p.title, p.description, p.name, p.address, p.bloodGroup].join(" ").toLowerCase().includes(term));
+      filtered.sort((a, b) => sort === "new" ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt));
+      $("#posts-list").innerHTML = filtered.length ? filtered.map(post => `
+        <article class="request-card">
+          <div class="request-top">${categoryBadge(post.category)}<span class="subtle">${dateLabel(post.createdAt)}</span></div>
+          <h3>${escapeHTML(post.title)}</h3>
+          <p>${escapeHTML(post.description)}</p>
+          <div class="meta-list">
+            <span>👤 ${escapeHTML(post.name)}</span>
+            <span>☎ ${escapeHTML(post.phone)}</span>
+            <span>⌖ ${escapeHTML(post.address)}</span>
+            ${post.category === "blood" ? `<span>🩸 রক্তের গ্রুপ: <strong>${escapeHTML(post.bloodGroup || "উল্লেখ নেই")}</strong> · ব্যাগ: <strong>${post.units ? bn(post.units) : "উল্লেখ নেই"}</strong></span>` : ""}
+          </div>
+          <div class="card-actions"><a class="btn btn-primary btn-small" href="${phoneHref(post.phone)}">কল করুন</a><a class="btn btn-secondary btn-small" href="${waHref(post.phone, "আসসালামু আলাইকুম, আপনার সাহায্যের পোস্টটি দেখেছি: " + post.title)}" target="_blank" rel="noopener noreferrer">WhatsApp</a></div>
+          <button class="danger-link" data-delete-post="${escapeHTML(post.id)}">আমার পোস্ট মুছুন</button>
+        </article>`).join("") : `<div class="empty-state"><strong>কোনো পোস্ট পাওয়া যায়নি</strong>এই ধরন বা শব্দের সঙ্গে মেলে এমন পোস্ট নেই।</div>`;
+    };
+    view.querySelectorAll("[data-post-filter]").forEach(btn => btn.addEventListener("click", () => {
+      activePostFilter = btn.dataset.postFilter;
+      renderPosts();
+    }));
+    $("#post-search").addEventListener("input", renderList);
+    $("#post-sort").addEventListener("change", renderList);
+    $("#posts-list").addEventListener("click", event => {
+      const btn = event.target.closest("[data-delete-post]");
+      if (btn) {
+        $("#delete-post-id").value = btn.dataset.deletePost;
+        $("#delete-code").value = "";
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else showToast("এই ব্রাউজারে ডিলিট ডায়ালগ সমর্থিত নয়।");
+      }
+    });
+    renderList();
+  }
+  function submitDelete(event) {
+    event.preventDefault();
+    const id = $("#delete-post-id").value;
+    const code = $("#delete-code").value.trim();
+    const posts = read(STORAGE.posts);
+    const post = posts.find(p => p.id === id);
+    if (!post || post.deleteCode !== code) return showToast("ডিলিট কোড সঠিক নয়।");
+    if (!write(STORAGE.posts, posts.filter(p => p.id !== id))) return;
+    dialog.close();
+    updateStats();
+    renderPosts();
+    showToast("পোস্ট মুছে ফেলা হয়েছে।");
+  }
+  function renderDonorForm() {
+    view.innerHTML = `<section class="panel">
+      ${panelHead("রক্তদাতা হিসেবে যোগ দিন", "আপনার তথ্য দিয়ে রক্তদাতাদের তালিকায় যুক্ত হন।")}
+      <div class="warning"><strong>গোপনীয়তার সতর্কতা:</strong> নাম, ঠিকানা, রক্তের গ্রুপ ও ফোন নম্বর তালিকায় প্রকাশিত হবে। এই ডেমোতে তথ্য শুধু এই ব্রাউজারে সংরক্ষিত হয়।</div>
+      <form id="donor-form"><div class="form-grid">
+        ${field("আপনার নাম", "donor-name", "text", { placeholder: "পূর্ণ নাম", maxlength: 80, autocomplete: "name" })}
+        ${field("রক্তের গ্রুপ", "donor-group", "select", { options: bloodOptions() })}
+        ${field("মোবাইল নম্বর", "donor-phone", "tel", { placeholder: "01XXXXXXXXX", pattern: "^(\\\\+?88)?01[3-9][0-9]{8}$", maxlength: 14, autocomplete: "tel" })}
+        ${field("ঠিকানা", "donor-address", "text", { placeholder: "এলাকা, থানা, জেলা", maxlength: 180, autocomplete: "street-address" })}
+      </div>
+      <label class="consent-row"><input id="donor-consent" type="checkbox" required><span>আমি সম্মতি দিচ্ছি যে আমার নাম, ঠিকানা, ফোন নম্বর ও রক্তের গ্রুপ প্রকাশ্য তালিকায় দেখানো হবে।</span></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">নিবন্ধন করুন</button><button class="btn btn-secondary" type="reset">ফর্ম মুছুন</button></div></form>
+    </section>`;
+    $("#donor-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const d = new FormData(event.currentTarget);
+      if (!validBDPhone(d.get("donor-phone"))) return showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।");
+      const donor = { id: uid(), name: String(d.get("donor-name")).trim(), group: d.get("donor-group"), phone: normalizePhone(d.get("donor-phone")), address: String(d.get("donor-address")).trim(), createdAt: new Date().toISOString() };
+      if (!donor.name || !donor.group || !donor.address) return showToast("সব প্রয়োজনীয় ঘর পূরণ করুন।");
+      const existing = read(STORAGE.donors);
+      if (existing.some(x => x.phone === donor.phone)) return showToast("এই নম্বর দিয়ে একজন রক্তদাতা ইতিমধ্যে যুক্ত আছেন।");
+      if (!write(STORAGE.donors, [donor, ...existing])) return;
+      updateStats();
+      showToast("আপনার তথ্য এই ব্রাউজারে সংরক্ষিত হয়েছে।");
+      renderDonors();
+    });
+  }
+  function renderDonors() {
+    const donors = read(STORAGE.donors);
+    view.innerHTML = `<section class="panel">
+      ${panelHead("রক্তদাতাদের তালিকা", "রক্তের গ্রুপ ও এলাকা অনুযায়ী দাতা খুঁজুন।", '<button class="text-button" data-view="join-donor">+ রক্তদাতা হিসেবে যোগ দিন</button>')}
+      <div class="warning">দাতার তথ্য যাচাই করে যোগাযোগ করুন। তালিকাটি এই ব্রাউজারের স্থানীয় ডেটা; এটি এখনও সবার জন্য অনলাইনে শেয়ার হয় না।</div>
+      <div class="toolbar"><select id="donor-group-filter" aria-label="রক্তের গ্রুপ"><option value="">সব রক্তের গ্রুপ</option>${bloodGroups.map(g => `<option value="${g}">${g}</option>`).join("")}</select><input id="donor-search" type="search" placeholder="নাম, এলাকা বা ফোন নম্বর দিয়ে খুঁজুন" aria-label="রক্তদাতা খুঁজুন"></div>
+      <div id="donors-list" class="cards-list"></div>
+    </section>`;
+    const renderList = () => {
+      const group = $("#donor-group-filter").value;
+      const term = $("#donor-search").value.trim().toLowerCase();
+      const filtered = read(STORAGE.donors).filter(d => (!group || d.group === group) && [d.name,d.address,d.phone,d.group].join(" ").toLowerCase().includes(term));
+      $("#donors-list").innerHTML = filtered.length ? filtered.map(d => `
+        <article class="person-card"><div class="person-top"><div class="avatar">♡</div><div><h3>${escapeHTML(d.name)}</h3><span class="blood-group">${escapeHTML(d.group)}</span></div></div>
+          <div class="meta-list"><span>⌖ ${escapeHTML(d.address)}</span><span>☎ ${escapeHTML(d.phone)}</span></div>
+          <div class="card-actions"><a class="btn btn-primary btn-small" href="${phoneHref(d.phone)}">কল করুন</a><a class="btn btn-secondary btn-small" href="${waHref(d.phone)}" target="_blank" rel="noopener noreferrer">WhatsApp</a></div>
+        </article>`).join("") : `<div class="empty-state"><strong>এখনও কোনো রক্তদাতা নেই</strong>এই ব্রাউজারে নিবন্ধিত দাতা পাওয়া যায়নি।</div>`;
+    };
+    $("#donor-group-filter").addEventListener("change", renderList);
+    $("#donor-search").addEventListener("input", renderList);
+    renderList();
+  }
+  function renderVolunteerForm() {
+    view.innerHTML = `<section class="panel">
+      ${panelHead("ভলান্টিয়ার হিসেবে যোগ দিন", "আপনি কোন এলাকায় সহায়তা করতে পারবেন তা জানান।")}
+      <div class="warning"><strong>প্রকাশ্য তথ্য:</strong> আপনার নাম, ফোন নম্বর, ঠিকানা ও সহায়তার এলাকা প্রকাশ্য তালিকায় দেখানো হতে পারে। নিরাপত্তার কারণে বাড়ির নির্দিষ্ট নম্বরের বদলে এলাকা/থানা/জেলা লিখুন।</div>
+      <form id="volunteer-form"><div class="form-grid">
+        ${field("আপনার নাম", "vol-name", "text", { placeholder: "পূর্ণ নাম", maxlength: 80, autocomplete: "name" })}
+        ${field("মোবাইল নম্বর", "vol-phone", "tel", { placeholder: "01XXXXXXXXX", pattern: "^(\\\\+?88)?01[3-9][0-9]{8}$", maxlength: 14, autocomplete: "tel" })}
+        ${field("আপনার এলাকা", "vol-address", "text", { placeholder: "এলাকা, থানা, জেলা", maxlength: 180, autocomplete: "street-address" })}
+        ${field("কত দূর পর্যন্ত সহায়তা করতে পারবেন?", "vol-range", "select", { options: '<option value="">এলাকা বেছে নিন</option><option value="5">প্রায় ৫ কিলোমিটার</option><option value="10">প্রায় ১০ কিলোমিটার</option><option value="20">প্রায় ২০ কিলোমিটার</option><option value="district">নিজ জেলা</option><option value="other">অন্যান্য / আলোচনা সাপেক্ষে</option>' })}
+        ${field("কী ধরনের সহায়তা করতে পারবেন? (ঐচ্ছিক)", "vol-skills", "textarea", { placeholder: "যেমন: জরুরি যাতায়াত, খাবার, রক্তদাতা খোঁজা", required: false, maxlength: 500, full: true })}
+      </div>
+      <label class="consent-row"><input id="vol-consent" type="checkbox" required><span>আমি সম্মতি দিচ্ছি যে আমার নাম, ফোন নম্বর, এলাকা ও সহায়তার পরিসর প্রকাশ করা হবে।</span></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">নিবন্ধন করুন</button><button class="btn btn-secondary" type="reset">ফর্ম মুছুন</button></div></form>
+    </section>`;
+    $("#volunteer-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const d = new FormData(event.currentTarget);
+      if (!validBDPhone(d.get("vol-phone"))) return showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।");
+      const volunteer = { id: uid(), name: String(d.get("vol-name")).trim(), phone: normalizePhone(d.get("vol-phone")), address: String(d.get("vol-address")).trim(), range: d.get("vol-range"), skills: String(d.get("vol-skills") || "").trim(), createdAt: new Date().toISOString() };
+      if (!volunteer.name || !volunteer.address || !volunteer.range) return showToast("সব প্রয়োজনীয় ঘর পূরণ করুন।");
+      const existing = read(STORAGE.volunteers);
+      if (existing.some(x => x.phone === volunteer.phone)) return showToast("এই নম্বর দিয়ে একজন ভলান্টিয়ার ইতিমধ্যে যুক্ত আছেন।");
+      if (!write(STORAGE.volunteers, [volunteer, ...existing])) return;
+      updateStats();
+      showToast("আপনার তথ্য এই ব্রাউজারে সংরক্ষিত হয়েছে।");
+      renderVolunteers();
+    });
+  }
+  function renderVolunteers() {
+    const volunteers = read(STORAGE.volunteers);
+    view.innerHTML = `<section class="panel">${panelHead("স্বেচ্ছাসেবকদের তালিকা", "এলাকা ও সহায়তার ধরন অনুযায়ী স্বেচ্ছাসেবক খুঁজুন.", '<button class="text-button" data-view="join-volunteer">+ ভলান্টিয়ার হিসেবে যোগ দিন</button>')}
+      <div class="warning">এই তালিকা কেবল এই ব্রাউজারের ডেটা দেখায়। এলাকা-ভিত্তিক স্বয়ংক্রিয় নোটিফিকেশন চালু করতে অনলাইন ব্যাকএন্ড ও লোকেশন ব্যবস্থা লাগবে।</div>
+      <div class="toolbar"><input id="vol-search" type="search" placeholder="নাম, এলাকা বা সহায়তার ধরন দিয়ে খুঁজুন" aria-label="ভলান্টিয়ার খুঁজুন"></div>
+      <div id="vol-list" class="cards-list"></div></section>`;
+    const renderList = () => {
+      const term = $("#vol-search").value.trim().toLowerCase();
+      const filtered = read(STORAGE.volunteers).filter(v => [v.name,v.address,v.skills,v.range].join(" ").toLowerCase().includes(term));
+      $("#vol-list").innerHTML = filtered.length ? filtered.map(v => `<article class="person-card"><div class="person-top"><div class="avatar">✚</div><div><h3>${escapeHTML(v.name)}</h3><span class="badge">স্বেচ্ছাসেবক</span></div></div><div class="meta-list"><span>⌖ ${escapeHTML(v.address)}</span><span>সহায়তার পরিসর: ${escapeHTML(v.range === "district" ? "নিজ জেলা" : v.range === "other" ? "আলোচনা সাপেক্ষে" : "প্রায় " + v.range + " কিলোমিটার")}</span>${v.skills ? `<span>সহায়তা: ${escapeHTML(v.skills)}</span>` : ""}<span>☎ ${escapeHTML(v.phone)}</span></div><div class="card-actions"><a class="btn btn-primary btn-small" href="${phoneHref(v.phone)}">কল করুন</a><a class="btn btn-secondary btn-small" href="${waHref(v.phone)}" target="_blank" rel="noopener noreferrer">WhatsApp</a></div></article>`).join("") : `<div class="empty-state"><strong>এখনও কোনো স্বেচ্ছাসেবক নেই</strong>এই ব্রাউজারে নিবন্ধিত স্বেচ্ছাসেবক পাওয়া যায়নি।</div>`;
+    };
+    $("#vol-search").addEventListener("input", renderList);
+    renderList();
+  }
+  function renderHotlines() {
+    view.innerHTML = `<section class="panel">
+      ${panelHead("জাতীয় সহায়তা কেন্দ্র", "জরুরি ও গুরুত্বপূর্ণ সরকারি সহায়তা নম্বর।")}
+      <div class="warning"><strong>সতর্কতা:</strong> নম্বর বা সেবার প্রাপ্যতা পরিবর্তিত হতে পারে। গুরুত্বপূর্ণ পরিস্থিতিতে কল করার আগে সরকারি উৎস থেকে নম্বর যাচাই করুন। জীবন-ঝুঁকির জরুরি অবস্থায় ৯৯৯-এ চেষ্টা করুন।</div>
+      <div class="hotline-grid">${hotlines.map(h => `<article class="hotline-card"><div><h3>${escapeHTML(h.name)}</h3><div class="hotline-number">${escapeHTML(bn(h.number))}</div><p>${escapeHTML(h.description)}</p></div><a class="btn btn-primary btn-small" href="tel:${h.number}">কল করুন</a></article>`).join("")}</div>
+      <p class="subtle" style="margin-top:18px">এই নম্বরগুলো তথ্য সহায়তার জন্য দেওয়া হয়েছে; এটি সরকারি ওয়েবসাইট নয়। প্রকাশের আগে প্রতিটি নম্বর ও সেবার বিবরণ সরকারি উৎসে যাচাই করুন।</p>
+    </section>`;
+  }
+
+  document.addEventListener("click", event => {
+    const nav = event.target.closest("[data-view]");
+    if (nav) {
+      event.preventDefault();
+      openView(nav.dataset.view);
+      return;
+    }
+    const close = event.target.closest("[data-close-dialog]");
+    if (close) dialog.close();
+  });
+  $("#delete-form").addEventListener("submit", submitDelete);
+  $("#year").textContent = new Date().getFullYear();
+  updateStats();
+  renderPlaceholder();
+})();
