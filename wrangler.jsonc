@@ -7,5 +7,12 @@
     "directory": "./public",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bipod-bondhu-db",
+      "database_id": "084f68f8-9e7f-4006-811b-c04b624d9df1"
+    }
+  ]
 }
