@@ -157,23 +157,26 @@
   ========================= */
 
   getRemoteRequests() 
+  
   async function updateStats() {
-    $("#stat-donors").textContent =
-      bn(read(STORAGE.donors).length);
-
-    $("#stat-volunteers").textContent =
-      bn(read(STORAGE.volunteers).length);
-
     try {
-      const rows = await getRemoteRequests();
+      const [posts, donors, volunteers] = await Promise.all([
+        getRemoteRequests(),
+        getRemoteDonors(),
+        getRemoteVolunteers()
+      ]);
 
-      $("#stat-posts").textContent = bn(rows.length);
+      $("#stat-posts").textContent = bn(posts.length);
+      $("#stat-donors").textContent = bn(donors.length);
+      $("#stat-volunteers").textContent = bn(volunteers.length);
     } catch (error) {
       console.error("Stats loading error:", error);
-
       $("#stat-posts").textContent = "—";
+      $("#stat-donors").textContent = "—";
+      $("#stat-volunteers").textContent = "—";
     }
   }
+
 
   function normalizeRemotePost(row) {
     return {
