@@ -156,22 +156,7 @@
      API FUNCTIONS
   ========================= */
 
-  async function getRemoteRequests() {
-    const response = await fetch(API_BASE + "/requests");
-
-    if (!response.ok) {
-      throw new Error("API request failed: " + response.status);
-    }
-
-    const result = await response.json();
-
-    if (!result.ok || !Array.isArray(result.requests)) {
-      throw new Error("Invalid API response");
-    }
-
-    return result.requests;
-  }
-
+  getRemoteRequests() 
   async function updateStats() {
     $("#stat-donors").textContent =
       bn(read(STORAGE.donors).length);
