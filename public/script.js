@@ -890,28 +890,25 @@
      DONOR REGISTRATION
   ========================= */
 
+
   function renderDonorForm() {
     view.innerHTML = `
       <section class="panel">
-
         ${panelHead(
           "রক্তদাতা হিসেবে যোগ দিন",
-          "আপনার তথ্য দিয়ে রক্তদাতাদের তালিকায় যুক্ত হন।"
+          "আপনার তথ্য দিয়ে অনলাইন রক্তদাতা তালিকায় যুক্ত হন।"
         )}
 
         <div class="warning">
-          <strong>গোপনীয়তার সতর্কতা:</strong>
-          নাম, ঠিকানা, রক্তের গ্রুপ ও ফোন নম্বর তালিকায় প্রকাশিত হবে।
-          এই সংস্করণে তথ্য শুধু এই ব্রাউজারে সংরক্ষিত হয়।
+          আপনার নাম, ফোন নম্বর, রক্তের গ্রুপ ও ঠিকানা প্রকাশ্য তালিকায় দেখা যাবে।
+          সম্মতি দেওয়ার আগে বিষয়টি বুঝে নিন।
         </div>
 
         <form id="donor-form">
-
           <div class="form-grid">
-
             ${field("আপনার নাম", "donor-name", "text", {
               placeholder: "পূর্ণ নাম",
-              maxlength: 80,
+              maxlength: 100,
               autocomplete: "name"
             })}
 
@@ -926,18 +923,16 @@
               autocomplete: "tel"
             })}
 
-            ${field("ঠিকানা", "donor-address", "text", {
+            ${field("এলাকা / ঠিকানা", "donor-address", "text", {
               placeholder: "এলাকা, থানা, জেলা",
-              maxlength: 180,
-              autocomplete: "street-address"
+              maxlength: 180
             })}
-
           </div>
 
           <label class="consent-row">
             <input id="donor-consent" type="checkbox" required>
             <span>
-              আমি সম্মতি দিচ্ছি যে আমার নাম, ঠিকানা, ফোন নম্বর ও রক্তের গ্রুপ প্রকাশ্য তালিকায় দেখানো হবে।
+              আমি সম্মতি দিচ্ছি যে আমার নাম, ফোন নম্বর, রক্তের গ্রুপ ও ঠিকানা প্রকাশ্য অনলাইন তালিকায় দেখানো হবে।
             </span>
           </label>
 
@@ -945,59 +940,59 @@
             <button class="btn btn-primary" type="submit">
               নিবন্ধন করুন
             </button>
-
             <button class="btn btn-secondary" type="reset">
               ফর্ম মুছুন
             </button>
           </div>
-
         </form>
       </section>
     `;
 
-    $("#donor-form").addEventListener("submit", event => {
+    $("#donor-form").addEventListener("submit", async event => {
       event.preventDefault();
 
-      const d = new FormData(event.currentTarget);
+      const form = event.currentTarget;
+      const button = form.querySelector('[type="submit"]');
+      const d = new FormData(form);
+      const phone = apiPhone(d.get("donor-phone"));
 
       if (!validBDPhone(d.get("donor-phone"))) {
         return showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।");
       }
 
       const donor = {
-        id: uid(),
-        name: String(d.get("donor-name")).trim(),
-        group: d.get("donor-group"),
-        phone: normalizePhone(d.get("donor-phone")),
-        address: String(d.get("donor-address")).trim(),
-        createdAt: new Date().toISOString()
+        name: String(d.get("donor-name") || "").trim(),
+        phone,
+        blood_group: String(d.get("donor-group") || ""),
+        address: String(d.get("donor-address") || "").trim(),
+        consent: $("#donor-consent").checked
       };
 
-      if (!donor.name || !donor.group || !donor.address) {
-        return showToast("সব প্রয়োজনীয় ঘর পূরণ করুন।");
+      if (!donor.name || !donor.blood_group || !donor.address) {
+        return showToast("সব প্রয়োজনীয় তথ্য পূরণ করুন।");
       }
 
-      const existing = read(STORAGE.donors);
+      button.disabled = true;
+      button.textContent = "নিবন্ধন হচ্ছে…";
 
-      if (existing.some(x => x.phone === donor.phone)) {
-        return showToast("এই নম্বর দিয়ে একজন রক্তদাতা ইতিমধ্যে যুক্ত আছেন।");
+      try {
+        await apiRequest("/donors", {
+          method: "POST",
+          body: JSON.stringify(donor)
+        });
+
+        await updateStats();
+
+        showToast("রক্তদাতা হিসেবে অনলাইন নিবন্ধন সফল হয়েছে।");
+        renderDonors();
+      } catch (error) {
+        showToast(error.message);
+        button.disabled = false;
+        button.textContent = "নিবন্ধন করুন";
       }
-
-      if (!write(STORAGE.donors, [donor, ...existing])) {
-        return;
-      }
-
-      updateStats();
-
-      showToast("আপনার তথ্য এই ব্রাউজারে সংরক্ষিত হয়েছে।");
-
-      renderDonors();
     });
   }
 
-  /* =========================
-     DONOR LIST
-  ========================= */
 
   function renderDonors() {
     view.innerHTML = `
