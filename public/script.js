@@ -1177,28 +1177,25 @@
      VOLUNTEER REGISTRATION
   ========================= */
 
+  
   function renderVolunteerForm() {
     view.innerHTML = `
       <section class="panel">
-
         ${panelHead(
           "ভলান্টিয়ার হিসেবে যোগ দিন",
-          "আপনি কোন এলাকায় সহায়তা করতে পারবেন তা জানান।"
+          "আপনি কোথায় এবং কীভাবে মানুষের পাশে দাঁড়াতে পারবেন তা জানান।"
         )}
 
         <div class="warning">
-          <strong>প্রকাশ্য তথ্য:</strong>
-          আপনার নাম, ফোন নম্বর, ঠিকানা ও সহায়তার এলাকা প্রকাশ্য তালিকায় দেখানো হতে পারে।
-          নিরাপত্তার কারণে বাড়ির নির্দিষ্ট নম্বরের বদলে এলাকা/থানা/জেলা লিখুন।
+          আপনার নাম, ফোন নম্বর, এলাকা ও সহায়তার পরিসর প্রকাশ্য তালিকায় দেখা যাবে।
+          বাড়ির নির্দিষ্ট ঠিকানা না দিয়ে এলাকা/থানা/জেলা লিখুন।
         </div>
 
         <form id="volunteer-form">
-
           <div class="form-grid">
-
             ${field("আপনার নাম", "vol-name", "text", {
               placeholder: "পূর্ণ নাম",
-              maxlength: 80,
+              maxlength: 100,
               autocomplete: "name"
             })}
 
@@ -1211,13 +1208,12 @@
 
             ${field("আপনার এলাকা", "vol-address", "text", {
               placeholder: "এলাকা, থানা, জেলা",
-              maxlength: 180,
-              autocomplete: "street-address"
+              maxlength: 180
             })}
 
             ${field("কত দূর পর্যন্ত সহায়তা করতে পারবেন?", "vol-range", "select", {
               options: `
-                <option value="">এলাকা বেছে নিন</option>
+                <option value="">সহায়তার পরিসর বেছে নিন</option>
                 <option value="5">প্রায় ৫ কিলোমিটার</option>
                 <option value="10">প্রায় ১০ কিলোমিটার</option>
                 <option value="20">প্রায় ২০ কিলোমিটার</option>
@@ -1227,85 +1223,80 @@
             })}
 
             ${field("কী ধরনের সহায়তা করতে পারবেন? (ঐচ্ছিক)", "vol-skills", "textarea", {
-              placeholder: "যেমন: জরুরি যাতায়াত, খাবার, রক্তদাতা খোঁজা",
+              placeholder: "যেমন: জরুরি যাতায়াত, খাবার বিতরণ, প্রাথমিক সহায়তা",
               required: false,
               maxlength: 500,
               full: true
             })}
-
           </div>
 
           <label class="consent-row">
             <input id="vol-consent" type="checkbox" required>
             <span>
-              আমি সম্মতি দিচ্ছি যে আমার নাম, ফোন নম্বর, এলাকা ও সহায়তার পরিসর প্রকাশ করা হবে।
+              আমি সম্মতি দিচ্ছি যে আমার নাম, ফোন নম্বর, এলাকা ও সহায়তার পরিসর প্রকাশ্য অনলাইন তালিকায় দেখানো হবে।
             </span>
           </label>
 
           <div class="form-actions">
-
             <button class="btn btn-primary" type="submit">
               নিবন্ধন করুন
             </button>
-
             <button class="btn btn-secondary" type="reset">
               ফর্ম মুছুন
             </button>
-
           </div>
-
         </form>
       </section>
     `;
 
-    $("#volunteer-form").addEventListener("submit", event => {
+    $("#volunteer-form").addEventListener("submit", async event => {
       event.preventDefault();
 
-      const d = new FormData(event.currentTarget);
+      const form = event.currentTarget;
+      const button = form.querySelector('[type="submit"]');
+      const d = new FormData(form);
 
       if (!validBDPhone(d.get("vol-phone"))) {
         return showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।");
       }
 
       const volunteer = {
-        id: uid(),
-        name: String(d.get("vol-name")).trim(),
-        phone: normalizePhone(d.get("vol-phone")),
-        address: String(d.get("vol-address")).trim(),
-        range: d.get("vol-range"),
+        name: String(d.get("vol-name") || "").trim(),
+        phone: apiPhone(d.get("vol-phone")),
+        address: String(d.get("vol-address") || "").trim(),
+        support_range: String(d.get("vol-range") || ""),
         skills: String(d.get("vol-skills") || "").trim(),
-        createdAt: new Date().toISOString()
+        consent: $("#vol-consent").checked
       };
 
       if (
         !volunteer.name ||
         !volunteer.address ||
-        !volunteer.range
+        !volunteer.support_range
       ) {
         return showToast("সব প্রয়োজনীয় ঘর পূরণ করুন।");
       }
 
-      const existing = read(STORAGE.volunteers);
+      button.disabled = true;
+      button.textContent = "নিবন্ধন হচ্ছে…";
 
-      if (existing.some(x => x.phone === volunteer.phone)) {
-        return showToast("এই নম্বর দিয়ে একজন ভলান্টিয়ার ইতিমধ্যে যুক্ত আছেন।");
+      try {
+        await apiRequest("/volunteers", {
+          method: "POST",
+          body: JSON.stringify(volunteer)
+        });
+
+        await updateStats();
+
+        showToast("স্বেচ্ছাসেবক হিসেবে অনলাইন নিবন্ধন সফল হয়েছে।");
+        renderVolunteers();
+      } catch (error) {
+        showToast(error.message);
+        button.disabled = false;
+        button.textContent = "নিবন্ধন করুন";
       }
-
-      if (!write(STORAGE.volunteers, [volunteer, ...existing])) {
-        return;
-      }
-
-      updateStats();
-
-      showToast("আপনার তথ্য এই ব্রাউজারে সংরক্ষিত হয়েছে।");
-
-      renderVolunteers();
     });
   }
-
-  /* =========================
-     VOLUNTEER LIST
-  ========================= */
 
   function renderVolunteers() {
     view.innerHTML = `
