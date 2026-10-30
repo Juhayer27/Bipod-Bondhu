@@ -217,11 +217,13 @@
     `;
   }
 
+  
   function openView(name) {
     const renderers = {
       create: renderCreateForm,
       posts: renderPosts,
       donors: renderDonors,
+      volunteers: renderVolunteers,
       "join-donor": renderDonorForm,
       "join-volunteer": renderVolunteerForm,
       hotlines: renderHotlines
@@ -229,22 +231,17 @@
 
     if (renderers[name]) {
       renderers[name]();
-
       view.focus({ preventScroll: true });
-
       view.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
     } else {
       renderPlaceholder();
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
+
 
   function panelHead(title, subtitle, extra = "") {
     return `
