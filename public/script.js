@@ -995,22 +995,21 @@
 
 
   function renderDonors() {
+  
+  async function renderDonors() {
     view.innerHTML = `
       <section class="panel">
-
         ${panelHead(
           "রক্তদাতাদের তালিকা",
-          "রক্তের গ্রুপ ও এলাকা অনুযায়ী দাতা খুঁজুন।",
+          "অনলাইন ডেটাবেসে নিবন্ধিত রক্তদাতাদের খুঁজুন।",
           '<button class="text-button" data-view="join-donor">+ রক্তদাতা হিসেবে যোগ দিন</button>'
         )}
 
         <div class="warning">
-          দাতার তথ্য যাচাই করে যোগাযোগ করুন।
-          তালিকাটি এই ব্রাউজারের স্থানীয় ডেটা; এটি এখনও সবার জন্য অনলাইনে শেয়ার হয় না।
+          যোগাযোগের আগে দাতার পরিচয় ও রক্তদানের উপযুক্ততা যাচাই করুন।
         </div>
 
         <div class="toolbar">
-
           <select id="donor-group-filter" aria-label="রক্তের গ্রুপ">
             <option value="">সব রক্তের গ্রুপ</option>
             ${bloodGroups.map(g => `<option value="${g}">${g}</option>`).join("")}
@@ -1019,16 +1018,94 @@
           <input
             id="donor-search"
             type="search"
-            placeholder="নাম, এলাকা বা ফোন নম্বর দিয়ে খুঁজুন"
+            placeholder="নাম, এলাকা বা ফোন দিয়ে খুঁজুন"
             aria-label="রক্তদাতা খুঁজুন"
           >
-
         </div>
 
-        <div id="donors-list" class="cards-list"></div>
-
+        <div id="donors-list" class="cards-list">
+          <div class="empty-state">রক্তদাতাদের তালিকা লোড হচ্ছে…</div>
+        </div>
       </section>
     `;
+
+    const list = $("#donors-list");
+    const groupInput = $("#donor-group-filter");
+    const searchInput = $("#donor-search");
+
+    let donors = [];
+
+    function renderList() {
+      const group = groupInput.value;
+      const term = searchInput.value.trim().toLowerCase();
+
+      const filtered = donors.filter(d =>
+        (!group || d.blood_group === group) &&
+        [d.name, d.address, d.phone, d.blood_group]
+          .join(" ")
+          .toLowerCase()
+          .includes(term)
+      );
+
+      list.innerHTML = filtered.length
+        ? filtered.map(d => `
+          <article class="person-card">
+            <div class="person-top">
+              <div class="avatar">♡</div>
+              <div>
+                <h3>${escapeHTML(d.name)}</h3>
+                <span class="blood-group">${escapeHTML(d.blood_group)}</span>
+              </div>
+            </div>
+
+            <div class="meta-list">
+              <span>⌖ ${escapeHTML(d.address)}</span>
+              <span>☎ ${escapeHTML(d.phone)}</span>
+            </div>
+
+            <div class="card-actions">
+              <a class="btn btn-primary btn-small"
+                 href="${phoneHref(d.phone)}">কল করুন</a>
+
+              <a class="btn btn-secondary btn-small"
+                 href="${waHref(d.phone)}"
+                 target="_blank"
+                 rel="noopener noreferrer">WhatsApp</a>
+            </div>
+          </article>
+        `).join("")
+        : `
+          <div class="empty-state">
+            <strong>কোনো রক্তদাতা পাওয়া যায়নি</strong>
+            অন্য রক্তের গ্রুপ বা এলাকা দিয়ে খুঁজুন।
+          </div>
+        `;
+    }
+
+    groupInput.addEventListener("change", renderList);
+    searchInput.addEventListener("input", renderList);
+
+    try {
+      donors = await getRemoteDonors();
+      renderList();
+    } catch (error) {
+      console.error("Donor loading error:", error);
+
+      list.innerHTML = `
+        <div class="empty-state">
+          <strong>রক্তদাতাদের তালিকা লোড করা যায়নি</strong>
+          ${escapeHTML(error.message)}
+          <br><br>
+          <button class="btn btn-secondary btn-small" id="retry-donors">
+            আবার চেষ্টা করুন
+          </button>
+        </div>
+      `;
+
+      $("#retry-donors").addEventListener("click", renderDonors);
+    }
+  }
+
 
     const renderList = () => {
       const group = $("#donor-group-filter").value;
