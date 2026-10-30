@@ -156,9 +156,66 @@
      API FUNCTIONS
   ========================= */
 
-  getRemoteRequests() 
-  
+  /* =========================
+     API FUNCTIONS
+  ========================= */
+
+  async function apiRequest(endpoint, options = {}) {
+    const response = await fetch(API_BASE + endpoint, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || result.ok === false) {
+      throw new Error(
+        result.error || result.message || "সার্ভারের সঙ্গে যোগাযোগ করা যায়নি।"
+      );
+    }
+
+    return result;
+  }
+
+  function apiPhone(raw) {
+    let phone = String(raw || "").replace(/\D/g, "");
+
+    if (phone.startsWith("00880")) {
+      phone = phone.slice(5);
+    } else if (phone.startsWith("880")) {
+      phone = phone.slice(3);
+    }
+
+    if (phone.length === 10 && phone.startsWith("1")) {
+      phone = "0" + phone;
+    }
+
+    return phone;
+  }
+
+  async function getRemoteRequests() {
+    const result = await apiRequest("/requests");
+    return result.requests || [];
+  }
+
+  async function getRemoteDonors() {
+    const result = await apiRequest("/donors");
+    return result.donors || [];
+  }
+
+  async function getRemoteVolunteers() {
+    const result = await apiRequest("/volunteers");
+    return result.volunteers || [];
+  }
+
   async function updateStats() {
+    const statPosts = $("#stat-posts");
+    const statDonors = $("#stat-donors");
+    const statVolunteers = $("#stat-volunteers");
+
     try {
       const [posts, donors, volunteers] = await Promise.all([
         getRemoteRequests(),
@@ -166,41 +223,17 @@
         getRemoteVolunteers()
       ]);
 
-      $("#stat-posts").textContent = bn(posts.length);
-      $("#stat-donors").textContent = bn(donors.length);
-      $("#stat-volunteers").textContent = bn(volunteers.length);
+      if (statPosts) statPosts.textContent = bn(posts.length);
+      if (statDonors) statDonors.textContent = bn(donors.length);
+      if (statVolunteers) statVolunteers.textContent = bn(volunteers.length);
+
     } catch (error) {
       console.error("Stats loading error:", error);
-      $("#stat-posts").textContent = "—";
-      $("#stat-donors").textContent = "—";
-      $("#stat-volunteers").textContent = "—";
+
+      if (statPosts) statPosts.textContent = "—";
+      if (statDonors) statDonors.textContent = "—";
+      if (statVolunteers) statVolunteers.textContent = "—";
     }
-  }
-
-
-  function normalizeRemotePost(row) {
-    return {
-      id: row.id,
-      category: row.type || "general",
-      name: row.name || "",
-      title: row.title || "",
-      phone: row.phone || "",
-      address: row.address || "",
-      description: row.description || "",
-      bloodGroup: row.blood_group || "",
-      units: row.bags_needed == null
-        ? null
-        : Number(row.bags_needed),
-      createdAt: row.created_at || new Date().toISOString()
-    };
-  }
-
-  async function fetchRemotePosts() {
-    const rows = await getRemoteRequests();
-
-    remotePosts = rows.map(normalizeRemotePost);
-
-    return remotePosts;
   }
 
   /* =========================
@@ -1057,20 +1090,217 @@
                 <span class="blood-group">${escapeHTML(d.blood_group)}</span>
               </div>
             </div>
+/* =========================
+     DONOR REGISTRATION
+  ========================= */
+
+  function renderDonorForm() {
+    view.innerHTML = `
+      <section class="panel">
+        ${panelHead(
+          "রক্তদাতা হিসেবে যোগ দিন",
+          "আপনার তথ্য দিয়ে অনলাইন রক্তদাতা তালিকায় যুক্ত হন।"
+        )}
+
+        <div class="warning">
+          আপনার নাম, ফোন নম্বর, রক্তের গ্রুপ ও ঠিকানা প্রকাশ্য তালিকায় দেখা যাবে।
+          সম্মতি দেওয়ার আগে বিষয়টি বুঝে নিন।
+        </div>
+
+        <form id="donor-form">
+          <div class="form-grid">
+
+            ${field("আপনার নাম", "donor-name", "text", {
+              placeholder: "পূর্ণ নাম",
+              maxlength: 100,
+              autocomplete: "name"
+            })}
+
+            ${field("রক্তের গ্রুপ", "donor-group", "select", {
+              options: bloodOptions()
+            })}
+
+            ${field("মোবাইল নম্বর", "donor-phone", "tel", {
+              placeholder: "01XXXXXXXXX",
+              pattern: "^(\\+?88)?01[3-9][0-9]{8}$",
+              maxlength: 14,
+              autocomplete: "tel"
+            })}
+
+            ${field("এলাকা / ঠিকানা", "donor-address", "text", {
+              placeholder: "এলাকা, থানা, জেলা",
+              maxlength: 180
+            })}
+
+          </div>
+
+          <label class="consent-row">
+            <input id="donor-consent" type="checkbox" required>
+            <span>
+              আমি সম্মতি দিচ্ছি যে আমার নাম, ফোন নম্বর, রক্তের গ্রুপ ও ঠিকানা
+              প্রকাশ্য অনলাইন তালিকায় দেখানো হবে।
+            </span>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">
+              নিবন্ধন করুন
+            </button>
+
+            <button class="btn btn-secondary" type="reset">
+              ফর্ম মুছুন
+            </button>
+          </div>
+        </form>
+      </section>
+    `;
+
+    $("#donor-form").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const form = event.currentTarget;
+      const button = form.querySelector('[type="submit"]');
+      const data = new FormData(form);
+
+      const rawPhone = data.get("donor-phone");
+
+      if (!validBDPhone(rawPhone)) {
+        showToast("সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।");
+        return;
+      }
+
+      const donor = {
+        name: String(data.get("donor-name") || "").trim(),
+        phone: apiPhone(rawPhone),
+        blood_group: String(data.get("donor-group") || ""),
+        address: String(data.get("donor-address") || "").trim(),
+        consent: $("#donor-consent").checked
+      };
+
+      if (
+        !donor.name ||
+        !donor.blood_group ||
+        !donor.address ||
+        !donor.consent
+      ) {
+        showToast("সব প্রয়োজনীয় তথ্য পূরণ করুন এবং সম্মতি দিন।");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "নিবন্ধন হচ্ছে…";
+
+      try {
+        await apiRequest("/donors", {
+          method: "POST",
+          body: JSON.stringify(donor)
+        });
+
+        await updateStats();
+
+        showToast("রক্তদাতা হিসেবে অনলাইন নিবন্ধন সফল হয়েছে।");
+        renderDonors();
+
+      } catch (error) {
+        console.error("Donor registration error:", error);
+        showToast(error.message || "নিবন্ধন করা যায়নি। আবার চেষ্টা করুন।");
+
+        button.disabled = false;
+        button.textContent = "নিবন্ধন করুন";
+      }
+    });
+  }
+
+  /* =========================
+     RENDER ONLINE DONORS
+  ========================= */
+
+  async function renderDonors() {
+    view.innerHTML = `
+      <section class="panel">
+        ${panelHead(
+          "রক্তদাতাদের তালিকা",
+          "অনলাইন ডেটাবেসে নিবন্ধিত রক্তদাতাদের খুঁজুন।",
+          '<button class="text-button" data-view="join-donor">+ রক্তদাতা হিসেবে যোগ দিন</button>'
+        )}
+
+        <div class="warning">
+          যোগাযোগের আগে দাতার পরিচয় ও রক্তদানের উপযুক্ততা যাচাই করুন।
+        </div>
+
+        <div class="toolbar">
+          <select id="donor-group-filter" aria-label="রক্তের গ্রুপ">
+            <option value="">সব রক্তের গ্রুপ</option>
+            ${bloodGroups.map(group =>
+              `<option value="${group}">${group}</option>`
+            ).join("")}
+          </select>
+
+          <input
+            id="donor-search"
+            type="search"
+            placeholder="নাম, এলাকা বা ফোন দিয়ে খুঁজুন"
+            aria-label="রক্তদাতা খুঁজুন"
+          >
+        </div>
+
+        <div id="donors-list" class="cards-list">
+          <div class="empty-state">রক্তদাতাদের তালিকা লোড হচ্ছে…</div>
+        </div>
+      </section>
+    `;
+
+    const list = $("#donors-list");
+    const groupInput = $("#donor-group-filter");
+    const searchInput = $("#donor-search");
+
+    let donors = [];
+
+    function renderList() {
+      const group = groupInput.value;
+      const term = searchInput.value.trim().toLowerCase();
+
+      const filtered = donors.filter(donor =>
+        (!group || donor.blood_group === group) &&
+        [
+          donor.name,
+          donor.address,
+          donor.phone,
+          donor.blood_group
+        ].join(" ").toLowerCase().includes(term)
+      );
+
+      list.innerHTML = filtered.length
+        ? filtered.map(donor => `
+          <article class="person-card">
+            <div class="person-top">
+              <div class="avatar">♡</div>
+
+              <div>
+                <h3>${escapeHTML(donor.name)}</h3>
+                <span class="blood-group">
+                  ${escapeHTML(donor.blood_group)}
+                </span>
+              </div>
+            </div>
 
             <div class="meta-list">
-              <span>⌖ ${escapeHTML(d.address)}</span>
-              <span>☎ ${escapeHTML(d.phone)}</span>
+              <span>⌖ ${escapeHTML(donor.address)}</span>
+              <span>☎ ${escapeHTML(donor.phone)}</span>
             </div>
 
             <div class="card-actions">
-              <a class="btn btn-primary btn-small"
-                 href="${phoneHref(d.phone)}">কল করুন</a>
+              <a
+                class="btn btn-primary btn-small"
+                href="${phoneHref(donor.phone)}"
+              >কল করুন</a>
 
-              <a class="btn btn-secondary btn-small"
-                 href="${waHref(d.phone)}"
-                 target="_blank"
-                 rel="noopener noreferrer">WhatsApp</a>
+              <a
+                class="btn btn-secondary btn-small"
+                href="${waHref(donor.phone)}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >WhatsApp</a>
             </div>
           </article>
         `).join("")
@@ -1088,6 +1318,7 @@
     try {
       donors = await getRemoteDonors();
       renderList();
+
     } catch (error) {
       console.error("Donor loading error:", error);
 
@@ -1104,74 +1335,7 @@
 
       $("#retry-donors").addEventListener("click", renderDonors);
     }
-  }
-
-
-    const renderList = () => {
-      const group = $("#donor-group-filter").value;
-      const term = $("#donor-search").value.trim().toLowerCase();
-
-      const filtered = read(STORAGE.donors).filter(d =>
-        (!group || d.group === group) &&
-        [d.name, d.address, d.phone, d.group]
-          .join(" ")
-          .toLowerCase()
-          .includes(term)
-      );
-
-      $("#donors-list").innerHTML = filtered.length
-        ? filtered.map(d => `
-          <article class="person-card">
-
-            <div class="person-top">
-              <div class="avatar">♡</div>
-
-              <div>
-                <h3>${escapeHTML(d.name)}</h3>
-                <span class="blood-group">${escapeHTML(d.group)}</span>
-              </div>
-            </div>
-
-            <div class="meta-list">
-              <span>⌖ ${escapeHTML(d.address)}</span>
-              <span>☎ ${escapeHTML(d.phone)}</span>
-            </div>
-
-            <div class="card-actions">
-
-              <a
-                class="btn btn-primary btn-small"
-                href="${phoneHref(d.phone)}"
-              >
-                কল করুন
-              </a>
-
-              <a
-                class="btn btn-secondary btn-small"
-                href="${waHref(d.phone)}"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                WhatsApp
-              </a>
-
-            </div>
-
-          </article>
-        `).join("")
-        : `
-          <div class="empty-state">
-            <strong>এখনও কোনো রক্তদাতা নেই</strong>
-            এই ব্রাউজারে নিবন্ধিত দাতা পাওয়া যায়নি।
-          </div>
-        `;
-    };
-
-    $("#donor-group-filter").addEventListener("change", renderList);
-    $("#donor-search").addEventListener("input", renderList);
-
-    renderList();
-  }
+            }
 
   /* =========================
      VOLUNTEER REGISTRATION
