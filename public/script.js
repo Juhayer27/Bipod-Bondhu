@@ -1298,36 +1298,124 @@
     });
   }
 
-  function renderVolunteers() {
+  
+  async function renderVolunteers() {
     view.innerHTML = `
       <section class="panel">
-
         ${panelHead(
           "স্বেচ্ছাসেবকদের তালিকা",
-          "এলাকা ও সহায়তার ধরন অনুযায়ী স্বেচ্ছাসেবক খুঁজুন।",
+          "অনলাইনে নিবন্ধিত স্বেচ্ছাসেবকদের খুঁজুন।",
           '<button class="text-button" data-view="join-volunteer">+ ভলান্টিয়ার হিসেবে যোগ দিন</button>'
         )}
 
         <div class="warning">
-          এই তালিকা কেবল এই ব্রাউজারের ডেটা দেখায়।
-          এলাকা-ভিত্তিক স্বয়ংক্রিয় নোটিফিকেশন চালু করতে অনলাইন ব্যাকএন্ড ও লোকেশন ব্যবস্থা লাগবে।
+          যোগাযোগের আগে স্বেচ্ছাসেবকের পরিচয় ও সহায়তা দেওয়ার সক্ষমতা যাচাই করুন।
         </div>
 
         <div class="toolbar">
-
           <input
             id="vol-search"
             type="search"
             placeholder="নাম, এলাকা বা সহায়তার ধরন দিয়ে খুঁজুন"
             aria-label="ভলান্টিয়ার খুঁজুন"
           >
-
         </div>
 
-        <div id="vol-list" class="cards-list"></div>
-
+        <div id="vol-list" class="cards-list">
+          <div class="empty-state">স্বেচ্ছাসেবকদের তালিকা লোড হচ্ছে…</div>
+        </div>
       </section>
     `;
+
+    const list = $("#vol-list");
+    const searchInput = $("#vol-search");
+
+    let volunteers = [];
+
+    function rangeLabel(value) {
+      if (value === "district") return "নিজ জেলা";
+      if (value === "other") return "আলোচনা সাপেক্ষে";
+      if (["5", "10", "20"].includes(String(value))) {
+        return "প্রায় " + value + " কিলোমিটার";
+      }
+      return value || "উল্লেখ নেই";
+    }
+
+    function renderList() {
+      const term = searchInput.value.trim().toLowerCase();
+
+      const filtered = volunteers.filter(v =>
+        [
+          v.name,
+          v.address,
+          v.phone,
+          v.support_range,
+          v.skills
+        ].join(" ").toLowerCase().includes(term)
+      );
+
+      list.innerHTML = filtered.length
+        ? filtered.map(v => `
+          <article class="person-card">
+            <div class="person-top">
+              <div class="avatar">✚</div>
+              <div>
+                <h3>${escapeHTML(v.name)}</h3>
+                <span class="badge">স্বেচ্ছাসেবক</span>
+              </div>
+            </div>
+
+            <div class="meta-list">
+              <span>⌖ ${escapeHTML(v.address)}</span>
+              <span>সহায়তার পরিসর: ${escapeHTML(rangeLabel(v.support_range))}</span>
+              ${v.skills
+                ? `<span>সহায়তা: ${escapeHTML(v.skills)}</span>`
+                : ""}
+              <span>☎ ${escapeHTML(v.phone)}</span>
+            </div>
+
+            <div class="card-actions">
+              <a class="btn btn-primary btn-small"
+                 href="${phoneHref(v.phone)}">কল করুন</a>
+
+              <a class="btn btn-secondary btn-small"
+                 href="${waHref(v.phone)}"
+                 target="_blank"
+                 rel="noopener noreferrer">WhatsApp</a>
+            </div>
+          </article>
+        `).join("")
+        : `
+          <div class="empty-state">
+            <strong>কোনো স্বেচ্ছাসেবক পাওয়া যায়নি</strong>
+            অন্য নাম, এলাকা বা সহায়তার ধরন দিয়ে খুঁজুন।
+          </div>
+        `;
+    }
+
+    searchInput.addEventListener("input", renderList);
+
+    try {
+      volunteers = await getRemoteVolunteers();
+      renderList();
+    } catch (error) {
+      console.error("Volunteer loading error:", error);
+
+      list.innerHTML = `
+        <div class="empty-state">
+          <strong>স্বেচ্ছাসেবকদের তালিকা লোড করা যায়নি</strong>
+          ${escapeHTML(error.message)}
+          <br><br>
+          <button class="btn btn-secondary btn-small" id="retry-volunteers">
+            আবার চেষ্টা করুন
+          </button>
+        </div>
+      `;
+
+      $("#retry-volunteers").addEventListener("click", renderVolunteers);
+    }
+  }
+
 
     const renderList = () => {
       const term = $("#vol-search").value.trim().toLowerCase();
